@@ -1,11 +1,11 @@
 "use client"
-
+ 
 // ============================================================================
 // PriceChart — grafik garis tren harga beras.
 // Kompatibel dengan data buildTrend() dari lib/data.ts:
 // { week, actual, predicted }
 // ============================================================================
-
+ 
 import {
   CartesianGrid,
   Line,
@@ -16,7 +16,7 @@ import {
   YAxis,
 } from "recharts"
 import { formatRupiah } from "@/lib/data"
-
+ 
 type TrendPoint = {
   week?: string
   label?: string
@@ -25,13 +25,13 @@ type TrendPoint = {
   aktual?: number
   prediksi?: number
 }
-
+ 
 type NormalizedPoint = {
   week: string
   actual?: number
   predicted?: number
 }
-
+ 
 function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
   return data.map((point, index) => ({
     week: point.week ?? point.label ?? `M${index + 1}`,
@@ -39,18 +39,19 @@ function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
     predicted: point.predicted ?? point.prediksi,
   }))
 }
-
+ 
 function addSeriesConnectors(data: NormalizedPoint[]): NormalizedPoint[] {
   const firstPredictedIndex = data.findIndex((point) => point.predicted !== undefined)
-  if (firstPredictedIndex < 0) return data
-
+  if (firstPredictedIndex <= 0) return data
+  const lastActualIndex = firstPredictedIndex - 1
+ 
   return data.map((point, index) =>
-    index === firstPredictedIndex
-      ? { ...point, actual: point.predicted }
+    index === lastActualIndex
+      ? { ...point, predicted: point.actual }
       : point,
   )
 }
-
+ 
 function ChartTooltip({
   active,
   payload,
@@ -61,13 +62,13 @@ function ChartTooltip({
   label?: string
 }) {
   if (!active || !payload || payload.length === 0) return null
-
+ 
   const actual = payload.find((entry) => entry.dataKey === "actual")?.value
   const predicted = payload.find((entry) => entry.dataKey === "predicted")?.value
   const showPredicted =
     predicted !== undefined &&
     !(actual !== undefined && actual === predicted)
-
+ 
   return (
     <div
       style={{
@@ -94,7 +95,7 @@ function ChartTooltip({
     </div>
   )
 }
-
+ 
 export function PriceChart({
   data,
   mode = "government",
@@ -113,7 +114,7 @@ export function PriceChart({
             return point
           })
       : normalizedData
-
+ 
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
