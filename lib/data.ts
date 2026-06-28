@@ -364,17 +364,6 @@ export const PROVINCES: ProvinceData[] = [
       "Karena biaya logistik sangat tinggi, perlu diberikan subsidi ongkos angkut, diperkuat konektivitas tol laut, dan dikembangkan sawah lokal di Manokwari serta Sorong. Langkah ini akan menurunkan harga distribusi dan mengurangi ketergantungan terhadap pasokan jarak jauh yang mahal.",
   },
   {
-    id: "IRIAN JAYA TENGAH",
-    name: "Papua Tengah",
-    status: "defisit",
-    currentPrice: 17500,
-    predictedPrice: 18400,
-    production: 90,
-    consumption: 480,
-    recommendation:
-      "Papua Tengah berada di wilayah pegunungan yang terpencil, sehingga perlu memanfaatkan jembatan udara atau air bridge untuk distribusi, memberikan subsidi penuh ongkos kirim, dan memperkuat diversifikasi pangan lokal. Kebijakan ini sangat penting untuk mengatasi hambatan geografis yang mempersulit akses terhadap beras.",
-  },
-  {
     id: "IRIAN JAYA TIMUR",
     name: "Papua",
     status: "defisit",
