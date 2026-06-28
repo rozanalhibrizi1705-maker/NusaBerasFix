@@ -820,7 +820,7 @@ export function buildTrend(
   province: ProvinceData
 ): Array<{ week: string; actual?: number; predicted?: number }> {
   const historical = (province.historicalPrices ?? []).map((price, i) => ({
-    week: `H-${province.historicalPrices.length - i}`,
+    week: `M-${province.historicalPrices.length - i}`,
     actual: price,
     predicted: undefined,
   }))
