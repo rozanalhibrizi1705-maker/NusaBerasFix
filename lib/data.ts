@@ -1,4 +1,4 @@
-    consumption: 131180,
+    consumption: 131.18,
   },
   {
     id: "papua-barat",
@@ -15,8 +15,8 @@
     rekomendasiOperasional: "Harga beras di Papua Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.07, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Papua dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
     rekomendasiStruktural: "Rantai distribusi beras di Papua Barat lebih panjang dibanding median nasional (nilai 4.00). Petakan seluruh titik perantara dan identifikasi tahapan yang dapat dihilangkan. Fasilitasi skema kemitraan langsung antara penggilingan padi dan jaringan pengecer. Terapkan sistem informasi harga terbuka di tingkat pedagang grosir.",
     recommendation: "Harga beras di Papua Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.07, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Papua dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
-    production: 8360,
-    consumption: 116780,
+    production: 8.36,
+    consumption: 116.78,
   },
   {
     id: "papua",
@@ -33,8 +33,8 @@
     rekomendasiOperasional: "Harga beras di Papua diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.68, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
     rekomendasiStruktural: "Papua — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
     recommendation: "Harga beras di Papua diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.68, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
-    production: 195980,
-    consumption: 288070,
+    production: 195.98,
+    consumption: 288.07,
   },
 ]
 
