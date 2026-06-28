@@ -83,11 +83,16 @@ function ChartTooltip({
 
 export function PriceChart({
   data,
+  mode = "government",
 }: {
   data: TrendPoint[]
   mode?: "public" | "government"
 }) {
-  const chartData = normalizeData(data)
+  const normalizedData = normalizeData(data)
+  const chartData =
+    mode === "public"
+      ? normalizedData.filter((point) => point.actual !== undefined || point.week === "M1")
+      : normalizedData
 
   return (
     <div className="h-72 w-full">
