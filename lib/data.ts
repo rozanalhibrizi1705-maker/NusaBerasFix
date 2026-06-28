@@ -385,6 +385,40 @@ export const PROVINCES: ProvinceData[] = [
     recommendation:
       "Karena distribusi ke wilayah ini sulit dan mahal, perlu diperkuat gudang Bulog di Jayapura, dikombinasikan penyaluran melalui jalur laut dan udara, serta didorong pengembangan sentra produksi di Merauke. Strategi terpadu ini akan membantu menurunkan biaya logistik dan mempercepat penyaluran saat kebutuhan meningkat.",
   },
+  // === 3 PROVINSI BARU ===
+  {
+    id: "KEP. RIAU",
+    name: "Kepulauan Riau",
+    status: "defisit",
+    currentPrice: 14600,
+    predictedPrice: 15000,
+    production: 15,
+    consumption: 580,
+    recommendation:
+      "Kepulauan Riau sangat bergantung pada pasokan dari luar karena minimnya lahan pertanian. Amankan jalur distribusi laut dari Sumatera Utara dan Sumatera Barat, jaga stok penyangga minimal 3 bulan di Batam dan Tanjungpinang, serta manfaatkan program tol laut untuk menekan biaya logistik dan menjaga harga beras tetap terjangkau.",
+  },
+  {
+    id: "SULAWESI BARAT",
+    name: "Sulawesi Barat",
+    status: "stabil",
+    currentPrice: 13500,
+    predictedPrice: 13650,
+    production: 420,
+    consumption: 390,
+    recommendation:
+      "Pantau keseimbangan pasokan di Mamuju dan daerah terpencil, serta pastikan jalur distribusi dari Sulawesi Selatan tetap lancar. Pengembangan lahan pertanian lokal di dataran tinggi Sulawesi Barat perlu terus didorong untuk mengurangi ketergantungan terhadap pasokan antardaerah dan memperkuat ketahanan pangan jangka panjang.",
+  },
+  {
+    id: "KALIMANTAN UTARA",
+    name: "Kalimantan Utara",
+    status: "defisit",
+    currentPrice: 15100,
+    predictedPrice: 15600,
+    production: 65,
+    consumption: 280,
+    recommendation:
+      "Sebagai provinsi termuda dan berbatasan langsung dengan Malaysia, Kalimantan Utara perlu memperkuat pasokan dari Kalimantan Timur dan Kalimantan Selatan, meningkatkan pengawasan distribusi di wilayah perbatasan, dan mengembangkan food estate secara bertahap. Ketersediaan beras yang stabil sangat penting untuk menjaga kedaulatan pangan di wilayah perbatasan negara.",
+  },
 ]
 
 // Peta cepat: id mentah GeoJSON -> data provinsi.
