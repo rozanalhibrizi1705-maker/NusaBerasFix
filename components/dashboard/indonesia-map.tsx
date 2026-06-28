@@ -18,7 +18,7 @@ declare module "react-simple-maps" {
 }
 
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"
-import { PROVINCE_MAP, STATUS_STYLE, type ProvinceData } from "@/lib/data"
+import { PROVINCE_MAP_BY_GEO, STATUS_STYLE, type ProvinceData } from "@/lib/data"
 
 const GEO_URL = "/indonesia-provinces.json"
 
@@ -53,7 +53,7 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
           {({ geographies }) =>
             geographies.map((geo) => {
               const rawId: string = geo.properties.Propinsi
-              const data = PROVINCE_MAP[rawId]
+              const data = PROVINCE_MAP_BY_GEO[rawId] ?? PROVINCE_MAP_BY_GEO[rawId.trim()]
               const status = data ? STATUS_STYLE[data.status] : null
               const isSelected = data && data.id === selectedId
 
