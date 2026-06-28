@@ -1,509 +1,796 @@
 // ============================================================================
-// lib/data.ts
-// Sumber data dummy terstruktur untuk simulasi aplikasi Nusa Beras.
-// Semua angka bersifat fiktif dan hanya untuk keperluan prototipe.
+// lib/data.ts — NusaBeras
+// Data riil 34 provinsi dari output DSS (output_dss.csv).
+// Seluruh interface & helper dipertahankan agar kompatibel dengan komponen
+// yang sudah ada (DashboardContent, NationalSummaryContent, ProvinceDetailPanel,
+// IndonesiaMap, PriceChart).
 // ============================================================================
 
-// Status ketahanan beras sebuah provinsi.
-//  - "surplus" : produksi melebihi konsumsi (aman)
-//  - "stabil"  : produksi ~ konsumsi (perlu pemantauan)
-//  - "defisit" : konsumsi melebihi produksi (rawan / butuh intervensi)
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export type Status = "surplus" | "stabil" | "defisit"
+export type Kluster = "A" | "B" | "C" | "D"
+export type ShapeTrajectory = "stabil" | "late_surge" | "peak_awal"
 
 export interface ProvinceData {
-  /** Kunci mentah sesuai properti "Propinsi" pada GeoJSON peta */
   id: string
-  /** Nama tampilan yang rapi untuk UI */
   name: string
   status: Status
-  /** Harga beras saat ini (Rp / kg) */
-  currentPrice: number
-  /** Prediksi harga beras minggu depan (Rp / kg) */
-  predictedPrice: number
-  /** Estimasi produksi beras (ribu ton / tahun) */
+
+  // Harga
+  currentPrice: number        // harga minggu ini (prediksi_12minggu[0])
+  predictedPrice: number      // prediksi 12 minggu ke depan (prediksi_12minggu[11])
+  prediksi12Minggu: number[]  // array 12 titik untuk grafik
+
+  // DSS fields
+  kluster: Kluster
+  perubahanKumulatifPct: number
+  shapeTrajectory: ShapeTrajectory
+  skorPrioritas: number
+  pasarTerhubung: string[]
+
+  // Rekomendasi
+  recommendation: string          // alias rekomendasi_operasional (dipakai ProvinceDetailPanel)
+  rekomendasiOperasional: string
+  rekomendasiStruktural: string
+
+  // Legacy fields — diisi 0 agar komponen NationalSummaryContent tetap compile
   production: number
-  /** Estimasi konsumsi beras (ribu ton / tahun) */
   consumption: number
-  /** Rekomendasi kebijakan distribusi spesifik untuk daerah ini */
-  recommendation: string
 }
 
-// ----------------------------------------------------------------------------
-// Dataset utama. Kunci `id` HARUS sama persis dengan properti "Propinsi"
-// di dalam /public/indonesia-provinces.json agar peta bisa diwarnai.
-// ----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Style helpers
+// ---------------------------------------------------------------------------
+
+export const STATUS_STYLE: Record<
+  Status,
+  { fill: string; hover: string; label: string; badge: string }
+> = {
+  surplus: {
+    fill: "#16a34a",
+    hover: "#15803d",
+    label: "Surplus",
+    badge: "border-emerald-300 bg-emerald-50 text-emerald-700",
+  },
+  stabil: {
+    fill: "#2563eb",
+    hover: "#1d4ed8",
+    label: "Stabil",
+    badge: "border-blue-300 bg-blue-50 text-blue-700",
+  },
+  defisit: {
+    fill: "#dc2626",
+    hover: "#b91c1c",
+    label: "Defisit",
+    badge: "border-red-300 bg-red-50 text-red-700",
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Raw data — 34 provinsi
+// ---------------------------------------------------------------------------
+
 export const PROVINCES: ProvinceData[] = [
   {
-    id: "DI. ACEH",
+    id: "aceh",
     name: "Aceh",
+    kluster: "C",
     status: "stabil",
-    currentPrice: 13200,
-    predictedPrice: 13400,
-    production: 1850,
-    consumption: 1790,
-    recommendation:
-      "Pertahankan stok cadangan di gudang Bulog Banda Aceh, prioritaskan pengawasan harga di wilayah pesisir, dan siapkan distribusi cepat ke daerah yang mulai mengalami kenaikan permintaan menjelang musim paceklik. Langkah ini penting untuk mencegah lonjakan harga yang tidak terkendali dan menjaga daya beli masyarakat.",
+    currentPrice: 15155,
+    predictedPrice: 15131,
+    prediksi12Minggu: [15155,15160,15156,15153,15149,15145,15141,15138,15136,15134,15132,15131],
+    perubahanKumulatifPct: -0.13,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 0.0,
+    pasarTerhubung: [],
+    rekomendasiOperasional: "Harga beras di Aceh diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.49). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Aceh — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Aceh diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.49). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "SUMATERA UTARA",
+    id: "sumatera-utara",
     name: "Sumatera Utara",
-    status: "surplus",
-    currentPrice: 12800,
-    predictedPrice: 12700,
-    production: 3100,
-    consumption: 2650,
-    recommendation:
-      "Jadikan Sumatera Utara sebagai hub distribusi regional dengan mengoptimalkan pengangkutan ke Aceh, Kepulauan Riau, dan wilayah lain yang membutuhkan pasokan tambahan. Perkuat kerja sama dengan Bulog, distributor swasta, dan pelaku logistik untuk menjaga kelancaran rantai pasok dan menstabilkan harga di pasar lokal maupun antarpulau.",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 14877,
+    predictedPrice: 15189,
+    prediksi12Minggu: [14877,14904,14932,14959,14986,15012,15040,15064,15090,15121,15155,15189],
+    perubahanKumulatifPct: 2.29,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 11.747,
+    pasarTerhubung: ["Riau", "Jambi"],
+    rekomendasiOperasional: "Harga beras di Sumatera Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.91, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Riau dan Jambi saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Sumatera Utara — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Sumatera Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.91, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Riau dan Jambi saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "SUMATERA BARAT",
+    id: "sumatera-barat",
     name: "Sumatera Barat",
-    status: "surplus",
-    currentPrice: 13000,
-    predictedPrice: 12950,
-    production: 2050,
-    consumption: 1600,
-    recommendation:
-      "Optimalkan serapan gabah petani oleh Bulog melalui pembelian yang stabil dan harga yang adil, lalu dorong distribusi antarkabupaten dan antarpulau ke wilayah yang sedang mengalami defisit seperti Riau dan Jambi. Dukungan terhadap petani juga perlu diperkuat agar produksi tetap terjaga dan rantai pasok tidak terganggu.",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 18137,
+    predictedPrice: 18004,
+    prediksi12Minggu: [18137,18126,18115,18104,18089,18074,18060,18046,18033,18023,18014,18004],
+    perubahanKumulatifPct: -0.80,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 13.715,
+    pasarTerhubung: ["Jambi", "Lampung"],
+    rekomendasiOperasional: "Harga beras di Sumatera Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.17). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Sumatera Barat — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Sumatera Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.17). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "RIAU",
+    id: "riau",
     name: "Riau",
+    kluster: "D",
     status: "defisit",
-    currentPrice: 14100,
-    predictedPrice: 14600,
-    production: 720,
-    consumption: 1450,
-    recommendation:
-      "Prioritaskan operasi pasar di Pekanbaru dan Dumai, serta perkuat pasokan beras dari Sumatera Utara dan Sumatera Barat melalui jalur distribusi yang lebih terencana. Aktivasi sistem pengawasan harga dan pengendalian stok melalui SPHP sangat penting untuk menekan lonjakan harga dan memastikan ketersediaan beras tetap terjaga di wilayah perkotaan dan industri.",
+    currentPrice: 16410,
+    predictedPrice: 15983,
+    prediksi12Minggu: [16410,16365,16323,16282,16240,16200,16162,16126,16091,16055,16020,15983],
+    perubahanKumulatifPct: -2.84,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 7.009,
+    pasarTerhubung: ["DKI Jakarta", "Jambi"],
+    rekomendasiOperasional: "Harga beras di Riau diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.21, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Jambi saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Riau memiliki konektivitas fisik dengan Sumatera Barat — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Sumatera Barat berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Riau diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.21, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Jambi saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "JAMBI",
+    id: "jambi",
     name: "Jambi",
-    status: "stabil",
-    currentPrice: 13300,
-    predictedPrice: 13500,
-    production: 980,
-    consumption: 940,
-    recommendation:
-      "Jaga keseimbangan stok secara ketat dan siapkan jalur distribusi cepat dari Sumatera Selatan apabila defisit musiman muncul. Pemantauan harga harian, penyesuaian pasokan, dan koordinasi lintas kabupaten akan membantu mencegah terjadinya kelangkaan maupun spekulasi pasar yang merugikan masyarakat.",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15559,
+    predictedPrice: 15674,
+    prediksi12Minggu: [15559,15568,15578,15588,15599,15610,15621,15632,15643,15653,15664,15674],
+    perubahanKumulatifPct: 0.79,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 7.523,
+    pasarTerhubung: ["Sumatera Barat", "Lampung"],
+    rekomendasiOperasional: "Harga beras di Jambi diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.65, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sumatera Barat dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Jambi — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Jambi diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.65, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sumatera Barat dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "SUMATERA SELATAN",
+    id: "sumatera-selatan",
     name: "Sumatera Selatan",
+    kluster: "A",
     status: "surplus",
-    currentPrice: 12600,
-    predictedPrice: 12500,
-    production: 2950,
-    consumption: 2100,
-    recommendation:
-      "Perkuat kapasitas penyimpanan dan distribusi agar surplus beras dapat tersalurkan secara cepat ke Jambi, Bengkulu, dan Lampung yang membutuhkan pasokan tambahan. Peningkatan logistik, perbaikan fasilitas gudang, dan koordinasi antarwilayah akan membuat distribusi lebih efisien dan mengurangi potensi pemborosan maupun keterlambatan penyaluran.",
+    currentPrice: 15930,
+    predictedPrice: 16837,
+    prediksi12Minggu: [15930,16011,16092,16170,16249,16329,16409,16491,16576,16663,16750,16837],
+    perubahanKumulatifPct: 6.23,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 19.518,
+    pasarTerhubung: ["Lampung"],
+    rekomendasiOperasional: "Harga beras di Sumatera Selatan diprediksi naik 6.2% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Produksi lokal masih mencukupi sebagian besar kebutuhan (surplus ratio 2.39), sehingga tekanan kemungkinan bersumber dari hambatan distribusi atau mekanisme pasar internal. Pasar Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Periksa apakah ada penumpukan stok di tingkat distributor. Percepat alur distribusi dari gudang ke pasar eceran dan koordinasikan dengan Bulog wilayah untuk memastikan rantai distribusi internal berjalan lancar. Dengan produksi yang mencukupi, pertimbangkan peran Sumatera Selatan sebagai penyuplai bagi provinsi defisit yang berdekatan — koordinasikan melalui jalur perdagangan aktif.",
+    rekomendasiStruktural: "Sumatera Selatan memiliki surplus produksi 1.39 di atas kebutuhan lokal, namun harga beras justru mengalami tekanan kenaikan — indikasi kuat adanya disfungsi dalam tata niaga atau distribusi internal. Lakukan audit menyeluruh dari penggilingan hingga pasar eceran. Evaluasi kemungkinan penguasaan pasar yang tidak sehat oleh segelintir distributor besar, dan perkuat peran lembaga pangan lokal sebagai penyeimbang pasar.",
+    recommendation: "Harga beras di Sumatera Selatan diprediksi naik 6.2% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Produksi lokal masih mencukupi sebagian besar kebutuhan (surplus ratio 2.39), sehingga tekanan kemungkinan bersumber dari hambatan distribusi atau mekanisme pasar internal.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "BENGKULU",
+    id: "bengkulu",
     name: "Bengkulu",
-    status: "stabil",
-    currentPrice: 13450,
-    predictedPrice: 13600,
-    production: 640,
-    consumption: 600,
-    recommendation:
-      "Lakukan pemantauan rutin harga eceran dan pastikan pasokan dari Sumatera Selatan tetap lancar, terutama saat cuaca ekstrem memengaruhi distribusi. Langkah ini penting untuk menjaga stabilitas harga di wilayah yang relatif kecil namun sangat sensitif terhadap perubahan pasokan.",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15990,
+    predictedPrice: 16510,
+    prediksi12Minggu: [15990,16032,16075,16119,16164,16211,16261,16311,16361,16412,16462,16510],
+    perubahanKumulatifPct: 3.51,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 10.809,
+    pasarTerhubung: ["Sumatera Barat", "Lampung"],
+    rekomendasiOperasional: "Harga beras di Bengkulu diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.73, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sumatera Barat dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Bengkulu memiliki konektivitas fisik dengan Sumatera Barat — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Sumatera Barat berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Bengkulu diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.73, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sumatera Barat dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "LAMPUNG",
+    id: "lampung",
     name: "Lampung",
-    status: "surplus",
-    currentPrice: 12400,
-    predictedPrice: 12350,
-    production: 2700,
-    consumption: 1950,
-    recommendation:
-      "Manfaatkan Lampung sebagai gerbang logistik utama ke Pulau Jawa dengan memastikan kelancaran penyeberangan Bakauheni dan penanganan antrean logistik yang cepat. Distribusi yang lancar ke wilayah Jabodetabek akan membantu menstabilkan pasokan dan mengurangi risiko kenaikan harga di pusat konsumsi besar.",
-  },
-  {
-    id: "BANGKA BELITUNG",
-    name: "Bangka Belitung",
-    status: "defisit",
-    currentPrice: 14500,
-    predictedPrice: 15000,
-    production: 90,
-    consumption: 410,
-    recommendation:
-      "Karena wilayah kepulauan sangat bergantung pada pasokan luar, amankan jadwal kapal logistik dari Sumatera Selatan, perkuat sistem distribusi antarpulau, dan jaga stok penyangga minimal tiga bulan. Langkah ini sangat penting untuk mengantisipasi gangguan cuaca, keterlambatan pelayaran, dan fluktuasi harga yang tajam.",
-  },
-  {
-    id: "DKI JAKARTA",
-    name: "DKI Jakarta",
-    status: "defisit",
-    currentPrice: 14800,
-    predictedPrice: 15200,
-    production: 5,
-    consumption: 2400,
-    recommendation:
-      "Karena Jakarta adalah pusat konsumsi tanpa produksi yang cukup besar, jaga stok Pasar Induk Cipinang secara ketat, gencarkan operasi pasar, dan koordinasikan pasokan dari Jawa Barat serta Jawa Tengah secara berkelanjutan. Ketersediaan yang stabil di ibu kota sangat penting untuk menjaga harga tetap terkendali dan mencegah gejolak pasar.",
-  },
-  {
-    id: "PROBANTEN",
-    name: "Banten",
+    kluster: "C",
     status: "stabil",
-    currentPrice: 13700,
-    predictedPrice: 13900,
-    production: 1450,
-    consumption: 1400,
-    recommendation:
-      "Pantau harga secara intensif di wilayah industri Tangerang dan sekitarnya, lalu siapkan pasokan beras SPHP untuk meredam kenaikan harga akibat tingginya permintaan urban. Kebijakan ini penting untuk menjaga daya beli masyarakat pekerja dan menahan lonjakan akibat konsumsi yang padat.",
+    currentPrice: 14871,
+    predictedPrice: 15110,
+    prediksi12Minggu: [14871,14893,14915,14938,14959,14982,15004,15026,15047,15069,15090,15110],
+    perubahanKumulatifPct: 1.75,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 16.588,
+    pasarTerhubung: ["DKI Jakarta", "Sumatera Selatan"],
+    rekomendasiOperasional: "Harga beras di Lampung diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 2.17). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Lampung — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Lampung diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 2.17). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "JAWA BARAT",
-    name: "Jawa Barat",
-    status: "surplus",
-    currentPrice: 12900,
-    predictedPrice: 12800,
-    production: 9500,
-    consumption: 8200,
-    recommendation:
-      "Jawa Barat tetap menjadi penyangga utama beras nasional, sehingga perlu diperkuat serapan gabah petani, pengawasan distribusi, dan koordinasi harian ke DKI Jakarta serta Banten. Langkah ini akan memastikan pasokan tetap stabil sekaligus mendukung harga yang wajar di wilayah konsumen besar.",
-  },
-  {
-    id: "JAWA TENGAH",
-    name: "Jawa Tengah",
-    status: "surplus",
-    currentPrice: 12500,
-    predictedPrice: 12450,
-    production: 9800,
-    consumption: 7600,
-    recommendation:
-      "Jawa Tengah perlu memaksimalkan penyerapan gabah pada saat panen raya dan menyalurkan surplus secara terarah ke provinsi defisit di Indonesia Timur. Strategi ini tidak hanya menjaga harga di tingkat petani tetap menguntungkan, tetapi juga memperkuat ketahanan pangan nasional secara keseluruhan.",
-  },
-  {
-    id: "DAERAH ISTIMEWA YOGYAKARTA",
-    name: "DI Yogyakarta",
-    status: "stabil",
-    currentPrice: 13100,
-    predictedPrice: 13250,
-    production: 880,
-    consumption: 830,
-    recommendation:
-      "Jaga keseimbangan stok untuk kebutuhan mahasiswa, wisatawan, dan masyarakat perkotaan, serta siapkan koordinasi pasokan cepat dengan Jawa Tengah ketika lonjakan permintaan musiman terjadi. Pendekatan ini penting untuk menjaga ketersediaan beras tanpa menimbulkan lonjakan harga di pasar lokal.",
-  },
-  {
-    id: "JAWA TIMUR",
-    name: "Jawa Timur",
-    status: "surplus",
-    currentPrice: 12300,
-    predictedPrice: 12250,
-    production: 10500,
-    consumption: 8100,
-    recommendation:
-      "Jawa Timur sebagai produsen beras terbesar nasional perlu diperkuat posisinya sebagai basis pengiriman antarpulau ke Kalimantan, Sulawesi, Bali, dan Nusa Tenggara Timur. Dukungan logistik, kapasitas gudang, dan penjadwalan distribusi yang baik akan menjaga suplai tetap lancar dan harga lebih stabil di wilayah tujuan.",
-  },
-  {
-    id: "BALI",
-    name: "Bali",
-    status: "stabil",
-    currentPrice: 13600,
-    predictedPrice: 13800,
-    production: 820,
-    consumption: 900,
-    recommendation:
-      "Karena konsumsi beras di Bali sangat dipengaruhi aktivitas pariwisata, amankan pasokan tambahan dari Jawa Timur dan pantau harga secara lebih ketat menjelang musim liburan. Kesiapan stok di daerah wisata sangat penting untuk menjaga kestabilan harga dan kenyamanan wisatawan maupun masyarakat lokal.",
-  },
-  {
-    id: "NUSATENGGARA BARAT",
-    name: "Nusa Tenggara Barat",
-    status: "surplus",
-    currentPrice: 12700,
-    predictedPrice: 12650,
-    production: 1500,
-    consumption: 1200,
-    recommendation:
-      "Manfaatkan surplus dari Pulau Lombok dan Sumbawa untuk menyalurkan beras ke Nusa Tenggara Timur dan Bali yang lebih rentan mengalami fluktuasi pasokan. Distribusi yang terjadwal dengan baik akan membantu menyeimbangkan harga di wilayah-wilayah yang sering mengalami gangguan transportasi dan cuaca.",
-  },
-  {
-    id: "NUSA TENGGARA TIMUR",
-    name: "Nusa Tenggara Timur",
+    id: "kepulauan-bangka-belitung",
+    name: "Kepulauan Bangka Belitung",
+    kluster: "D",
     status: "defisit",
-    currentPrice: 15200,
-    predictedPrice: 15800,
-    production: 560,
-    consumption: 1100,
-    recommendation:
-      "Nusa Tenggara Timur termasuk wilayah yang rawan pangan dan sangat sensitif terhadap cuaca kering, sehingga perlu dibangun stok penyangga yang memadai, dipercepat distribusinya dari NTB dan Sulawesi Selatan, serta diperluas program bantuan pangan bagi masyarakat yang paling rentan. Langkah ini penting untuk mengurangi risiko kelangkaan dan menahan lonjakan harga.",
+    currentPrice: 15247,
+    predictedPrice: 14694,
+    prediksi12Minggu: [15247,15195,15140,15085,15032,14981,14931,14885,14840,14792,14744,14694],
+    perubahanKumulatifPct: -3.96,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 12.234,
+    pasarTerhubung: ["DKI Jakarta", "Lampung"],
+    rekomendasiOperasional: "Harga beras di Kepulauan Bangka Belitung diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.26, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Kepulauan Bangka Belitung — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Kepulauan Bangka Belitung diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.26, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "KALIMANTAN BARAT",
-    name: "Kalimantan Barat",
-    status: "stabil",
-    currentPrice: 13800,
-    predictedPrice: 14000,
-    production: 1300,
-    consumption: 1250,
-    recommendation:
-      "Pantau harga secara intensif di wilayah perbatasan, optimalkan produksi lokal, dan pastikan jalur pasokan dari Jawa melalui Pelabuhan Pontianak tetap lancar. Kesiapan logistik yang baik akan membantu menjaga ketersediaan beras dan mengurangi tekanan harga akibat keterbatasan distribusi.",
-  },
-  {
-    id: "KALIMANTAN TENGAH",
-    name: "Kalimantan Tengah",
-    status: "stabil",
-    currentPrice: 13900,
-    predictedPrice: 14100,
-    production: 950,
-    consumption: 880,
-    recommendation:
-      "Dorong perluasan areal tanam, cetak sawah, dan penguatan food estate secara bertahap, sambil memastikan pasokan dari Kalimantan Selatan dan Jawa Timur tetap tersedia untuk menutup kekurangan jangka pendek. Kebijakan ini penting agar provinsi dapat mengurangi ketergantungan terhadap pasokan luar dalam jangka menengah.",
-  },
-  {
-    id: "KALIMANTAN SELATAN",
-    name: "Kalimantan Selatan",
-    status: "surplus",
-    currentPrice: 13000,
-    predictedPrice: 12950,
-    production: 2200,
-    consumption: 1500,
-    recommendation:
-      "Kalimantan Selatan dapat diperkuat posisinya sebagai lumbung padi Kalimantan dengan menjadi pemasok utama bagi Kalimantan Tengah, Kalimantan Timur, dan wilayah sekitar ibu kota nusantara (IKN). Dukungan terhadap sarana penyimpanan, distribusi, dan pembelian gabah dari petani akan memperkuat peran strategis provinsi ini dalam menjaga ketahanan pangan regional.",
-  },
-  {
-    id: "KALIMANTAN TIMUR",
-    name: "Kalimantan Timur",
-    status: "defisit",
-    currentPrice: 14400,
-    predictedPrice: 14900,
-    production: 480,
-    consumption: 1150,
-    recommendation:
-      "Karena kebutuhan beras di Kalimantan Timur sangat tinggi, termasuk untuk kawasan IKN, amankan pasokan dari Kalimantan Selatan dan Sulawesi Selatan, perkuat logistik pelabuhan, dan pantau harga secara ketat di wilayah Balikpapan-Samarinda. Koordinasi yang baik antara distributor, pelabuhan, dan pasar lokal akan membantu mengurangi potensi kelangkaan.",
-  },
-  {
-    id: "SULAWESI UTARA",
-    name: "Sulawesi Utara",
-    status: "stabil",
-    currentPrice: 13500,
-    predictedPrice: 13650,
-    production: 720,
-    consumption: 690,
-    recommendation:
-      "Jaga keseimbangan stok di kota-kota utama seperti Manado dan siapkan pasokan cadangan dari Sulawesi Selatan apabila terjadi gangguan cuaca atau hambatan distribusi. Tindakan pencegahan ini penting untuk mencegah gejolak harga yang tajam di pasar lokal.",
-  },
-  {
-    id: "GORONTALO",
-    name: "Gorontalo",
-    status: "surplus",
-    currentPrice: 13200,
-    predictedPrice: 13100,
-    production: 680,
-    consumption: 480,
-    recommendation:
-      "Manfaatkan surplus jagung dan padi untuk menyalurkan kelebihan beras ke Sulawesi Utara dan Sulawesi Tengah, terutama saat kebutuhan meningkat di wilayah-wilayah yang lebih terpencil. Distribusi yang terencana akan membantu menjaga pasokan tetap stabil dan mengurangi ketergantungan pada impor dari luar daerah.",
-  },
-  {
-    id: "SULAWESI TENGAH",
-    name: "Sulawesi Tengah",
-    status: "stabil",
-    currentPrice: 13600,
-    predictedPrice: 13800,
-    production: 1050,
-    consumption: 980,
-    recommendation:
-      "Perkuat pemulihan produksi pasca-bencana, jaga distribusi ke wilayah terpencil, dan pastikan stok cadangan di Palu tetap memadai. Langkah ini penting agar pasokan beras tetap aman ketika akses jalan dan transportasi terganggu.",
-  },
-  {
-    id: "SULAWESI SELATAN",
-    name: "Sulawesi Selatan",
-    status: "surplus",
-    currentPrice: 12200,
-    predictedPrice: 12150,
-    production: 6000,
-    consumption: 3800,
-    recommendation:
-      "Jadikan Sulawesi Selatan sebagai lumbung pangan Indonesia Timur dengan memperkuat peran pusat distribusi ke Kalimantan, Maluku, Papua, dan Nusa Tenggara Timur. Penguatan logistik, penjaminan kualitas, dan sinkronisasi pasokan akan sangat membantu menjaga ketahanan pangan di wilayah-wilayah yang sulit dijangkau.",
-  },
-  {
-    id: "SULAWESI TENGGARA",
-    name: "Sulawesi Tenggara",
-    status: "stabil",
-    currentPrice: 13400,
-    predictedPrice: 13550,
-    production: 880,
-    consumption: 820,
-    recommendation:
-      "Pantau harga secara rutin di Kendari dan pastikan pasokan dari Sulawesi Selatan tetap stabil, terutama untuk wilayah kepulauan yang sangat bergantung pada distribusi laut. Koordinasi pelabuhan dan jadwal pengiriman yang konsisten akan membuat pasokan lebih andal.",
-  },
-  {
-    id: "MALUKU",
-    name: "Maluku",
-    status: "defisit",
-    currentPrice: 15500,
-    predictedPrice: 16100,
-    production: 210,
-    consumption: 640,
-    recommendation:
-      "Maluku adalah provinsi kepulauan yang sangat rawan terhadap gangguan pasokan, sehingga perlu dibangun gudang penyangga di Ambon, dipertahankan keamanan tol laut, dan dijaga stok minimal tiga sampai empat bulan. Strategi ini penting untuk mengurangi risiko kelangkaan akibat cuaca buruk maupun keterlambatan transportasi.",
-  },
-  {
-    id: "MALUKU UTARA",
-    name: "Maluku Utara",
-    status: "defisit",
-    currentPrice: 15300,
-    predictedPrice: 15900,
-    production: 180,
-    consumption: 520,
-    recommendation:
-      "Karena ketergantungan Maluku Utara terhadap pasokan luar sangat tinggi, manfaatkan program tol laut dari Sulawesi dan Surabaya secara konsisten untuk menjaga ketersediaan beras dan menstabilkan harga. Pengawasan distribusi dan penjadwalan yang tepat akan mengurangi risiko penurunan pasokan secara tiba-tiba.",
-  },
-  {
-    id: "IRIAN JAYA BARAT",
-    name: "Papua Barat",
-    status: "defisit",
-    currentPrice: 16200,
-    predictedPrice: 16900,
-    production: 130,
-    consumption: 560,
-    recommendation:
-      "Karena biaya logistik sangat tinggi, perlu diberikan subsidi ongkos angkut, diperkuat konektivitas tol laut, dan dikembangkan sawah lokal di Manokwari serta Sorong. Langkah ini akan menurunkan harga distribusi dan mengurangi ketergantungan terhadap pasokan jarak jauh yang mahal.",
-  },
-  {
-    id: "IRIAN JAYA TIMUR",
-    name: "Papua",
-    status: "defisit",
-    currentPrice: 16800,
-    predictedPrice: 17600,
-    production: 240,
-    consumption: 900,
-    recommendation:
-      "Karena distribusi ke wilayah ini sulit dan mahal, perlu diperkuat gudang Bulog di Jayapura, dikombinasikan penyaluran melalui jalur laut dan udara, serta didorong pengembangan sentra produksi di Merauke. Strategi terpadu ini akan membantu menurunkan biaya logistik dan mempercepat penyaluran saat kebutuhan meningkat.",
-  },
-  // === 3 PROVINSI BARU ===
-  {
-    id: "KEP. RIAU",
+    id: "kepulauan-riau",
     name: "Kepulauan Riau",
+    kluster: "D",
     status: "defisit",
-    currentPrice: 14600,
-    predictedPrice: 15000,
-    production: 15,
-    consumption: 580,
-    recommendation:
-      "Kepulauan Riau sangat bergantung pada pasokan dari luar karena minimnya lahan pertanian. Amankan jalur distribusi laut dari Sumatera Utara dan Sumatera Barat, jaga stok penyangga minimal 3 bulan di Batam dan Tanjungpinang, serta manfaatkan program tol laut untuk menekan biaya logistik dan menjaga harga beras tetap terjangkau.",
+    currentPrice: 15528,
+    predictedPrice: 15861,
+    prediksi12Minggu: [15528,15557,15584,15613,15644,15675,15707,15738,15770,15801,15831,15861],
+    perubahanKumulatifPct: 2.33,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 9.943,
+    pasarTerhubung: ["DKI Jakarta", "Sumatera Barat"],
+    rekomendasiOperasional: "Harga beras di Kepulauan Riau diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.00, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Sumatera Barat saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Kepulauan Riau memiliki konektivitas fisik dengan Lampung dan Jawa Timur — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Lampung dan Jawa Timur berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Kepulauan Riau diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.00, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Sumatera Barat saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "SULAWESI BARAT",
-    name: "Sulawesi Barat",
+    id: "dki-jakarta",
+    name: "DKI Jakarta",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 16830,
+    predictedPrice: 17174,
+    prediksi12Minggu: [16830,16860,16891,16920,16952,16984,17017,17049,17082,17113,17144,17174],
+    perubahanKumulatifPct: 2.22,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 7.425,
+    pasarTerhubung: ["DI Yogyakarta", "Nusa Tenggara Barat"],
+    rekomendasiOperasional: "Harga beras di DKI Jakarta diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.00, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DI Yogyakarta dan Nusa Tenggara Barat saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Rantai distribusi beras di DKI Jakarta lebih panjang dibanding median nasional (nilai 5.00). Petakan seluruh titik perantara dan identifikasi tahapan yang dapat dihilangkan. Fasilitasi skema kemitraan langsung antara penggilingan padi dan jaringan pengecer. Terapkan sistem informasi harga terbuka di tingkat pedagang grosir.",
+    recommendation: "Harga beras di DKI Jakarta diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.00, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DI Yogyakarta dan Nusa Tenggara Barat saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "jawa-barat",
+    name: "Jawa Barat",
+    kluster: "B",
     status: "stabil",
-    currentPrice: 13500,
-    predictedPrice: 13650,
-    production: 420,
-    consumption: 390,
-    recommendation:
-      "Pantau keseimbangan pasokan di Mamuju dan daerah terpencil, serta pastikan jalur distribusi dari Sulawesi Selatan tetap lancar. Pengembangan lahan pertanian lokal di dataran tinggi Sulawesi Barat perlu terus didorong untuk mengurangi ketergantungan terhadap pasokan antardaerah dan memperkuat ketahanan pangan jangka panjang.",
+    currentPrice: 15228,
+    predictedPrice: 16150,
+    prediksi12Minggu: [15228,15308,15391,15474,15558,15642,15727,15812,15896,15981,16066,16150],
+    perubahanKumulatifPct: 6.60,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 13.241,
+    pasarTerhubung: ["DKI Jakarta", "Banten"],
+    rekomendasiOperasional: "Harga beras di Jawa Barat diprediksi naik 6.6% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Provinsi ini memiliki surplus ratio 0.92 — sebagian besar kebutuhan beras bergantung pada pasokan dari luar daerah. Pasar DKI Jakarta dan Banten saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Amankan komitmen pasokan dari provinsi pemasok utama dalam 2 minggu ke depan. Tetapkan ambang harga sebagai pemicu otomatis operasi pasar.",
+    rekomendasiStruktural: "Jawa Barat — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Jawa Barat diprediksi naik 6.6% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Provinsi ini memiliki surplus ratio 0.92 — sebagian besar kebutuhan beras bergantung pada pasokan dari luar daerah. Pasar DKI Jakarta dan Banten saat ini masih stabil. Amankan komitmen pasokan dari provinsi pemasok utama dalam 2 minggu ke depan. Tetapkan ambang harga sebagai pemicu otomatis operasi pasar.",
+    production: 0,
+    consumption: 0,
   },
   {
-    id: "KALIMANTAN UTARA",
-    name: "Kalimantan Utara",
+    id: "jawa-tengah",
+    name: "Jawa Tengah",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 15390,
+    predictedPrice: 15912,
+    prediksi12Minggu: [15390,15432,15475,15521,15572,15622,15671,15721,15770,15819,15866,15912],
+    perubahanKumulatifPct: 3.66,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 12.994,
+    pasarTerhubung: ["DI Yogyakarta", "Jawa Timur"],
+    rekomendasiOperasional: "Harga beras di Jawa Tengah diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.33). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Jawa Tengah — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Jawa Tengah diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.33). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "di-yogyakarta",
+    name: "DI Yogyakarta",
+    kluster: "D",
     status: "defisit",
-    currentPrice: 15100,
-    predictedPrice: 15600,
-    production: 65,
-    consumption: 280,
-    recommendation:
-      "Sebagai provinsi termuda dan berbatasan langsung dengan Malaysia, Kalimantan Utara perlu memperkuat pasokan dari Kalimantan Timur dan Kalimantan Selatan, meningkatkan pengawasan distribusi di wilayah perbatasan, dan mengembangkan food estate secara bertahap. Ketersediaan beras yang stabil sangat penting untuk menjaga kedaulatan pangan di wilayah perbatasan negara.",
+    currentPrice: 14240,
+    predictedPrice: 14647,
+    prediksi12Minggu: [14240,14278,14315,14353,14392,14430,14469,14507,14543,14579,14613,14647],
+    perubahanKumulatifPct: 3.15,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 9.981,
+    pasarTerhubung: ["Jawa Tengah", "Jawa Timur"],
+    rekomendasiOperasional: "Harga beras di DI Yogyakarta diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.77, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Jawa Tengah dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Rantai distribusi beras di DI Yogyakarta lebih panjang dibanding median nasional (nilai 5.00). Petakan seluruh titik perantara dan identifikasi tahapan yang dapat dihilangkan. Fasilitasi skema kemitraan langsung antara penggilingan padi dan jaringan pengecer. Terapkan sistem informasi harga terbuka di tingkat pedagang grosir.",
+    recommendation: "Harga beras di DI Yogyakarta diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.77, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Jawa Tengah dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "jawa-timur",
+    name: "Jawa Timur",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 14725,
+    predictedPrice: 15027,
+    prediksi12Minggu: [14725,14751,14778,14806,14835,14864,14893,14922,14950,14977,15003,15027],
+    perubahanKumulatifPct: 2.23,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 17.189,
+    pasarTerhubung: ["Jawa Tengah"],
+    rekomendasiOperasional: "Harga beras di Jawa Timur diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.30). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Jawa Timur — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Jawa Timur diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.30). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "banten",
+    name: "Banten",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15717,
+    predictedPrice: 15713,
+    prediksi12Minggu: [15717,15733,15744,15741,15736,15732,15725,15720,15716,15714,15713,15713],
+    perubahanKumulatifPct: 0.09,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 12.611,
+    pasarTerhubung: ["DKI Jakarta", "Lampung"],
+    rekomendasiOperasional: "Harga beras di Banten diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.81, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Banten memiliki konektivitas fisik dengan Lampung — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Lampung berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Banten diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.81, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Lampung saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "bali",
+    name: "Bali",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15734,
+    predictedPrice: 15581,
+    prediksi12Minggu: [15734,15718,15703,15689,15676,15663,15650,15637,15623,15609,15595,15581],
+    perubahanKumulatifPct: -1.07,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 7.307,
+    pasarTerhubung: ["Nusa Tenggara Barat", "Jawa Tengah"],
+    rekomendasiOperasional: "Harga beras di Bali diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.61, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Nusa Tenggara Barat dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Bali memiliki konektivitas fisik dengan Nusa Tenggara Barat — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Nusa Tenggara Barat berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Bali diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.61, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Nusa Tenggara Barat dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "nusa-tenggara-barat",
+    name: "Nusa Tenggara Barat",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 13947,
+    predictedPrice: 13886,
+    prediksi12Minggu: [13947,13944,13942,13940,13939,13937,13934,13928,13921,13911,13900,13886],
+    perubahanKumulatifPct: -0.46,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 11.945,
+    pasarTerhubung: ["Jawa Timur"],
+    rekomendasiOperasional: "Harga beras di Nusa Tenggara Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.34). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Nusa Tenggara Barat — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Nusa Tenggara Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.34). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "nusa-tenggara-timur",
+    name: "Nusa Tenggara Timur",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15329,
+    predictedPrice: 15653,
+    prediksi12Minggu: [15329,15353,15380,15411,15446,15481,15514,15546,15576,15603,15629,15653],
+    perubahanKumulatifPct: 2.30,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 8.195,
+    pasarTerhubung: ["Nusa Tenggara Barat", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Nusa Tenggara Timur diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.81, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Nusa Tenggara Barat dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Nusa Tenggara Timur memiliki konektivitas fisik dengan Jawa Timur dan Nusa Tenggara Barat — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Timur dan Nusa Tenggara Barat berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Nusa Tenggara Timur diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.81, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Nusa Tenggara Barat dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "kalimantan-barat",
+    name: "Kalimantan Barat",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 16637,
+    predictedPrice: 16541,
+    prediksi12Minggu: [16637,16624,16612,16603,16594,16586,16578,16570,16562,16555,16548,16541],
+    perubahanKumulatifPct: -0.65,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 12.404,
+    pasarTerhubung: ["DKI Jakarta", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Kalimantan Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.89, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Kalimantan Barat memiliki konektivitas fisik dengan Jawa Tengah — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Tengah berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Kalimantan Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.89, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar DKI Jakarta dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "kalimantan-tengah",
+    name: "Kalimantan Tengah",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 19304,
+    predictedPrice: 18781,
+    prediksi12Minggu: [19304,19261,19219,19177,19135,19091,19045,18997,18946,18894,18839,18781],
+    perubahanKumulatifPct: -2.94,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 7.896,
+    pasarTerhubung: ["Kalimantan Selatan", "Jawa Tengah"],
+    rekomendasiOperasional: "Harga beras di Kalimantan Tengah diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.74, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Kalimantan Selatan dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Kalimantan Tengah memiliki konektivitas fisik dengan Jawa Tengah dan Jawa Timur — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Tengah dan Jawa Timur berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Kalimantan Tengah diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.74, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Kalimantan Selatan dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "kalimantan-selatan",
+    name: "Kalimantan Selatan",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 18863,
+    predictedPrice: 18992,
+    prediksi12Minggu: [18863,18877,18890,18903,18915,18927,18939,18950,18961,18972,18982,18992],
+    perubahanKumulatifPct: 0.75,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 16.598,
+    pasarTerhubung: ["Kalimantan Tengah", "Jawa Timur"],
+    rekomendasiOperasional: "Harga beras di Kalimantan Selatan diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.52). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Kalimantan Selatan — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Kalimantan Selatan diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.52). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "kalimantan-timur",
+    name: "Kalimantan Timur",
+    kluster: "B",
+    status: "stabil",
+    currentPrice: 16280,
+    predictedPrice: 17234,
+    prediksi12Minggu: [16280,16361,16446,16531,16618,16704,16791,16879,16967,17056,17144,17234],
+    perubahanKumulatifPct: 6.38,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 10.994,
+    pasarTerhubung: ["Kalimantan Selatan", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Kalimantan Timur diprediksi naik 6.4% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Provinsi ini memiliki surplus ratio 0.41 — sebagian besar kebutuhan beras bergantung pada pasokan dari luar daerah. Pasar Kalimantan Selatan dan Sulawesi Selatan saat ini masih stabil. Amankan komitmen pasokan dari provinsi pemasok utama dalam 2 minggu ke depan. Tetapkan ambang harga sebagai pemicu otomatis operasi pasar.",
+    rekomendasiStruktural: "Kalimantan Timur memiliki konektivitas fisik dengan Jawa Timur dan Sulawesi Tengah — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Timur dan Sulawesi Tengah berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Kalimantan Timur diprediksi naik 6.4% dalam 3 bulan ke depan, dengan tekanan yang diperkirakan memuncak menjelang akhir periode — respons pre-emptif diperlukan sebelum puncak terjadi. Provinsi ini memiliki surplus ratio 0.41 — sebagian besar kebutuhan beras bergantung pada pasokan dari luar daerah. Pasar Kalimantan Selatan dan Sulawesi Selatan saat ini masih stabil. Amankan komitmen pasokan dari provinsi pemasok utama dalam 2 minggu ke depan. Tetapkan ambang harga sebagai pemicu otomatis operasi pasar.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "kalimantan-utara",
+    name: "Kalimantan Utara",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 17152,
+    predictedPrice: 17688,
+    prediksi12Minggu: [17152,17205,17258,17312,17364,17415,17464,17513,17559,17604,17647,17688],
+    perubahanKumulatifPct: 3.44,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 14.324,
+    pasarTerhubung: ["Kalimantan Timur", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Kalimantan Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.36, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Kalimantan Timur dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Kalimantan Utara memiliki konektivitas fisik dengan Jawa Timur dan Sulawesi Tengah — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Timur dan Sulawesi Tengah berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Kalimantan Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.36, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Kalimantan Timur dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "sulawesi-utara",
+    name: "Sulawesi Utara",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 15022,
+    predictedPrice: 15233,
+    prediksi12Minggu: [15022,15044,15065,15087,15108,15128,15147,15166,15184,15201,15217,15233],
+    perubahanKumulatifPct: 1.55,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 9.383,
+    pasarTerhubung: ["Gorontalo", "Sulawesi Tengah"],
+    rekomendasiOperasional: "Harga beras di Sulawesi Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.50, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Gorontalo dan Sulawesi Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Sulawesi Utara memiliki konektivitas fisik dengan Sulawesi Tengah dan Sulawesi Selatan — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Sulawesi Tengah dan Sulawesi Selatan berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Sulawesi Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.50, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Gorontalo dan Sulawesi Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "sulawesi-tengah",
+    name: "Sulawesi Tengah",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 15298,
+    predictedPrice: 14720,
+    prediksi12Minggu: [15298,15251,15205,15156,15107,15056,15003,14949,14894,14837,14779,14720],
+    perubahanKumulatifPct: -4.10,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 8.236,
+    pasarTerhubung: ["Sulawesi Barat", "Sulawesi Tenggara"],
+    rekomendasiOperasional: "Harga beras di Sulawesi Tengah diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.42). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Sulawesi Tengah — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Sulawesi Tengah diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.42). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "sulawesi-selatan",
+    name: "Sulawesi Selatan",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 14279,
+    predictedPrice: 14567,
+    prediksi12Minggu: [14279,14307,14336,14364,14392,14419,14445,14471,14496,14521,14544,14567],
+    perubahanKumulatifPct: 2.23,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 14.058,
+    pasarTerhubung: ["Sulawesi Barat", "Jawa Tengah"],
+    rekomendasiOperasional: "Harga beras di Sulawesi Selatan diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 3.06). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Sulawesi Selatan — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Sulawesi Selatan diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 3.06). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "sulawesi-tenggara",
+    name: "Sulawesi Tenggara",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 15730,
+    predictedPrice: 16021,
+    prediksi12Minggu: [15730,15760,15790,15819,15848,15875,15902,15927,15952,15976,15999,16021],
+    perubahanKumulatifPct: 2.05,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 13.860,
+    pasarTerhubung: ["Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Sulawesi Tenggara diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.21). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Rantai distribusi beras di Sulawesi Tenggara lebih panjang dibanding median nasional (nilai 4.00). Petakan seluruh titik perantara dan identifikasi tahapan yang dapat dihilangkan. Fasilitasi skema kemitraan langsung antara penggilingan padi dan jaringan pengecer. Terapkan sistem informasi harga terbuka di tingkat pedagang grosir.",
+    recommendation: "Harga beras di Sulawesi Tenggara diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.21). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "gorontalo",
+    name: "Gorontalo",
+    kluster: "A",
+    status: "surplus",
+    currentPrice: 15282,
+    predictedPrice: 16181,
+    prediksi12Minggu: [15282,15364,15447,15529,15612,15693,15775,15857,15938,16019,16100,16181],
+    perubahanKumulatifPct: 6.45,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 16.653,
+    pasarTerhubung: ["Sulawesi Utara", "Sulawesi Tengah"],
+    rekomendasiOperasional: "Harga beras di Gorontalo diprediksi naik 6.5% dalam 3 bulan ke depan, dengan tekanan tertinggi diperkirakan pada awal periode, lalu mereda. Produksi lokal masih mencukupi sebagian besar kebutuhan (surplus ratio 1.06), sehingga tekanan kemungkinan bersumber dari hambatan distribusi atau mekanisme pasar internal. Pasar Sulawesi Utara dan Sulawesi Tengah saat ini masih stabil. Periksa apakah ada penumpukan stok di tingkat distributor. Percepat alur distribusi dari gudang ke pasar eceran dan koordinasikan dengan Bulog wilayah untuk memastikan rantai distribusi internal berjalan lancar. Dengan produksi yang mencukupi, pertimbangkan peran Gorontalo sebagai penyuplai bagi provinsi defisit yang berdekatan — koordinasikan melalui jalur perdagangan aktif.",
+    rekomendasiStruktural: "Gorontalo memiliki surplus produksi 0.06 di atas kebutuhan lokal, namun harga beras justru mengalami tekanan kenaikan — indikasi kuat adanya disfungsi dalam tata niaga atau distribusi internal. Lakukan audit menyeluruh dari penggilingan hingga pasar eceran. Evaluasi kemungkinan penguasaan pasar yang tidak sehat oleh segelintir distributor besar, dan perkuat peran lembaga pangan lokal sebagai penyeimbang pasar.",
+    recommendation: "Harga beras di Gorontalo diprediksi naik 6.5% dalam 3 bulan ke depan, dengan tekanan tertinggi diperkirakan pada awal periode, lalu mereda. Produksi lokal masih mencukupi sebagian besar kebutuhan (surplus ratio 1.06), sehingga tekanan kemungkinan bersumber dari hambatan distribusi atau mekanisme pasar internal. Pasar Sulawesi Utara dan Sulawesi Tengah saat ini masih stabil.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "sulawesi-barat",
+    name: "Sulawesi Barat",
+    kluster: "C",
+    status: "stabil",
+    currentPrice: 14546,
+    predictedPrice: 15005,
+    prediksi12Minggu: [14546,14592,14638,14682,14726,14769,14811,14852,14892,14930,14968,15005],
+    perubahanKumulatifPct: 3.48,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 12.729,
+    pasarTerhubung: ["Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Sulawesi Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.18). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    rekomendasiStruktural: "Sulawesi Barat — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Sulawesi Barat diprediksi stabil dalam 3 bulan ke depan. Produksi lokal mencukupi kebutuhan (surplus ratio 1.18). Pertahankan ritme distribusi yang berjalan. Lakukan pemantauan rutin mingguan.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "maluku",
+    name: "Maluku",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 16895,
+    predictedPrice: 17313,
+    prediksi12Minggu: [16895,16939,16982,17023,17064,17102,17140,17177,17213,17247,17280,17313],
+    perubahanKumulatifPct: 2.75,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 4.369,
+    pasarTerhubung: ["Sulawesi Selatan", "Jawa Tengah"],
+    rekomendasiOperasional: "Harga beras di Maluku diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.25, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Maluku memiliki konektivitas fisik dengan Jawa Timur dan Sulawesi Tenggara — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Timur dan Sulawesi Tenggara berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Maluku diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.25, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Tengah saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "maluku-utara",
+    name: "Maluku Utara",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 17685,
+    predictedPrice: 17993,
+    prediksi12Minggu: [17685,17719,17752,17784,17815,17844,17872,17899,17925,17949,17971,17993],
+    perubahanKumulatifPct: 1.94,
+    shapeTrajectory: "peak_awal",
+    skorPrioritas: 10.958,
+    pasarTerhubung: ["Sulawesi Utara", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Maluku Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.09, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Utara dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Maluku Utara memiliki konektivitas fisik dengan Jawa Timur dan Sulawesi Tengah — jalur ini tersedia secara infrastruktur namun belum pernah aktif sebagai jalur perdagangan beras. Saat ini Jawa Timur dan Sulawesi Tengah berada dalam kondisi surplus dan tidak tertekan, sehingga jalur ini berpotensi diaktifkan melalui kebijakan atau insentif distribusi sebagai alternatif pasokan jangka menengah.",
+    recommendation: "Harga beras di Maluku Utara diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.09, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Utara dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "papua-barat",
+    name: "Papua Barat",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 16843,
+    predictedPrice: 16865,
+    prediksi12Minggu: [16843,16837,16833,16830,16829,16830,16832,16835,16840,16847,16855,16865],
+    perubahanKumulatifPct: 0.09,
+    shapeTrajectory: "late_surge",
+    skorPrioritas: 9.128,
+    pasarTerhubung: ["Papua", "Sulawesi Selatan"],
+    rekomendasiOperasional: "Harga beras di Papua Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.07, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Papua dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Rantai distribusi beras di Papua Barat lebih panjang dibanding median nasional (nilai 4.00). Petakan seluruh titik perantara dan identifikasi tahapan yang dapat dihilangkan. Fasilitasi skema kemitraan langsung antara penggilingan padi dan jaringan pengecer. Terapkan sistem informasi harga terbuka di tingkat pedagang grosir.",
+    recommendation: "Harga beras di Papua Barat diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.07, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Papua dan Sulawesi Selatan saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
+  },
+  {
+    id: "papua",
+    name: "Papua",
+    kluster: "D",
+    status: "defisit",
+    currentPrice: 19034,
+    predictedPrice: 18838,
+    prediksi12Minggu: [19034,19018,19001,18985,18968,18950,18932,18914,18896,18877,18858,18838],
+    perubahanKumulatifPct: -1.11,
+    shapeTrajectory: "stabil",
+    skorPrioritas: 6.917,
+    pasarTerhubung: ["Sulawesi Selatan", "Jawa Timur"],
+    rekomendasiOperasional: "Harga beras di Papua diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.68, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    rekomendasiStruktural: "Papua — tidak ada catatan struktural yang memerlukan perhatian saat ini.",
+    recommendation: "Harga beras di Papua diprediksi stabil dalam 3 bulan ke depan, namun dengan surplus ratio 0.68, stabilitas ini bergantung penuh pada kelancaran pasokan dari luar daerah. Pasar Sulawesi Selatan dan Jawa Timur saat ini masih stabil. Gunakan jeda ini untuk memastikan kelancaran distribusi internal. Susun protokol respons darurat untuk skenario gangguan jalur pasokan utama. Diversifikasi sumber pasokan dengan menjalin kesepakatan awal bersama minimal dua provinsi pemasok.",
+    production: 0,
+    consumption: 0,
   },
 ]
 
-// Peta cepat: id mentah GeoJSON -> data provinsi.
-export const PROVINCE_MAP: Record<string, ProvinceData> = PROVINCES.reduce(
-  (acc, p) => {
-    acc[p.id] = p
-    return acc
-  },
-  {} as Record<string, ProvinceData>,
+// ---------------------------------------------------------------------------
+// Lookup maps
+// ---------------------------------------------------------------------------
+
+/** Lookup by id */
+export const PROVINCE_MAP: Record<string, ProvinceData> = Object.fromEntries(
+  PROVINCES.map((p) => [p.id, p])
 )
 
-// Warna status (selaras dengan tema). Dipakai untuk mewarnai peta & badge.
-export const STATUS_STYLE: Record<
-  Status,
-  { label: string; fill: string; hover: string; badge: string; text: string }
-> = {
-  surplus: {
-    label: "Surplus",
-    fill: "#16a34a",
-    hover: "#15803d",
-    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    text: "text-emerald-700",
-  },
-  stabil: {
-    label: "Stabil",
-    fill: "#f59e0b",
-    hover: "#d97706",
-    badge: "bg-amber-100 text-amber-800 border-amber-200",
-    text: "text-amber-700",
-  },
-  defisit: {
-    label: "Defisit",
-    fill: "#dc2626",
-    hover: "#b91c1c",
-    badge: "bg-red-100 text-red-800 border-red-200",
-    text: "text-red-700",
-  },
+/**
+ * Lookup by raw GeoJSON Propinsi key.
+ * Memetakan variasi nama di GeoJSON ke id provinsi yang benar.
+ */
+const GEO_NAME_MAP: Record<string, string> = {
+  // Sumatera
+  "Aceh": "aceh",
+  "Sumatera Utara": "sumatera-utara",
+  "Sumatera Barat": "sumatera-barat",
+  "Riau": "riau",
+  "Kepulauan Riau": "kepulauan-riau",
+  "Jambi": "jambi",
+  "Sumatera Selatan": "sumatera-selatan",
+  "Bangka Belitung": "kepulauan-bangka-belitung",
+  "Kepulauan Bangka Belitung": "kepulauan-bangka-belitung",
+  "Bengkulu": "bengkulu",
+  "Lampung": "lampung",
+  // Jawa
+  "DKI Jakarta": "dki-jakarta",
+  "Jakarta Raya": "dki-jakarta",
+  "Jawa Barat": "jawa-barat",
+  "Jawa Tengah": "jawa-tengah",
+  "DI Yogyakarta": "di-yogyakarta",
+  "Yogyakarta": "di-yogyakarta",
+  "Jawa Timur": "jawa-timur",
+  "Banten": "banten",
+  // Bali & Nusa Tenggara
+  "Bali": "bali",
+  "Nusa Tenggara Barat": "nusa-tenggara-barat",
+  "Nusa Tenggara Timur": "nusa-tenggara-timur",
+  // Kalimantan
+  "Kalimantan Barat": "kalimantan-barat",
+  "Kalimantan Tengah": "kalimantan-tengah",
+  "Kalimantan Selatan": "kalimantan-selatan",
+  "Kalimantan Timur": "kalimantan-timur",
+  "Kalimantan Utara": "kalimantan-utara",
+  // Sulawesi
+  "Sulawesi Utara": "sulawesi-utara",
+  "Sulawesi Tengah": "sulawesi-tengah",
+  "Sulawesi Selatan": "sulawesi-selatan",
+  "Sulawesi Tenggara": "sulawesi-tenggara",
+  "Gorontalo": "gorontalo",
+  "Sulawesi Barat": "sulawesi-barat",
+  // Maluku & Papua
+  "Maluku": "maluku",
+  "Maluku Utara": "maluku-utara",
+  "Papua Barat": "papua-barat",
+  "Papua": "papua",
+  "Papua Tengah": "papua",        // fallback ke Papua
 }
 
-// Format angka rupiah singkat (Rp 13.200).
+/**
+ * Dipakai IndonesiaMap: lookup ProvinceData dari nama GeoJSON Propinsi.
+ */
+export const PROVINCE_MAP_BY_GEO: Record<string, ProvinceData> = Object.fromEntries(
+  Object.entries(GEO_NAME_MAP)
+    .filter(([, id]) => PROVINCE_MAP[id])
+    .map(([geoName, id]) => [geoName, PROVINCE_MAP[id]])
+)
+
+// ---------------------------------------------------------------------------
+// Helper functions
+// ---------------------------------------------------------------------------
+
 export function formatRupiah(value: number): string {
-  return "Rp " + value.toLocaleString("id-ID")
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
-// ----------------------------------------------------------------------------
-// Bangun tren mingguan harga beras (2 minggu lalu -> minggu ini -> 12 minggu depan).
-// Data dihasilkan deterministik dari harga saat ini & prediksi agar grafik
-// terlihat natural namun konsisten setiap render.
-// ----------------------------------------------------------------------------
-export interface TrendPoint {
-  label: string
-  /** Harga aktual (untuk 2 minggu sebelumnya dan minggu ini) */
-  aktual: number | null
-  /** Harga prediksi (untuk minggu ini dan 12 minggu ke depan) */
-  prediksi: number | null
-}
-
-export function buildTrend(p: ProvinceData): TrendPoint[] {
-  const { currentPrice, predictedPrice } = p
-
-  // 2 minggu historis: M-2, M-1
-  const past = [
-    Math.round(currentPrice * 0.992),
-    Math.round(currentPrice * 0.998),
-  ]
-
-  // 12 minggu prediksi: M+1 sampai M+12
-  const future = Array.from({ length: 12 }, (_, i) =>
-    Math.round(currentPrice + (predictedPrice - currentPrice) * (i + 1) / 12),
-  )
-
-  const labels = [
-    "M-2",
-    "M-1",
-    "Minggu Ini",
-    ...Array.from({ length: 12 }, (_, i) => `M+${i + 1}`),
-  ]
-
-  const aktualVals = [...past, currentPrice, ...Array(12).fill(null)]
-  const prediksiVals = [...Array(2).fill(null), currentPrice, ...future]
-
-  return labels.map((label, i) => ({
-    label,
-    aktual: aktualVals[i] as number | null,
-    prediksi: prediksiVals[i] as number | null,
-  }))
-}
-
-// Ringkasan nasional untuk kartu statistik dashboard.
 export function getNationalSummary() {
   const total = PROVINCES.length
   const surplus = PROVINCES.filter((p) => p.status === "surplus").length
   const stabil = PROVINCES.filter((p) => p.status === "stabil").length
   const defisit = PROVINCES.filter((p) => p.status === "defisit").length
   const avgPrice = Math.round(
-    PROVINCES.reduce((s, p) => s + p.currentPrice, 0) / total,
+    PROVINCES.reduce((sum, p) => sum + p.currentPrice, 0) / total
   )
   return { total, surplus, stabil, defisit, avgPrice }
+}
+
+/**
+ * Membangun array titik tren harga untuk PriceChart.
+ * Menggunakan prediksi_12minggu: minggu 1 = aktual, minggu 2–12 = prediksi.
+ */
+export function buildTrend(
+  province: ProvinceData
+): Array<{ week: string; actual?: number; predicted?: number }> {
+  return province.prediksi12Minggu.map((price, i) => ({
+    week: `M${i + 1}`,
+    actual: i === 0 ? price : undefined,
+    predicted: i > 0 ? price : undefined,
+  }))
 }
