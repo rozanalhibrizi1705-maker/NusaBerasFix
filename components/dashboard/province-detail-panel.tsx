@@ -1,13 +1,15 @@
 "use client"
+
 // ============================================================================
-// ProvinceDetailPanel — panel samping (slide-over) berisi detail provinsi
-// dan rekomendasi kebijakan distribusi beras. Muncul saat provinsi diklik
-// pada peta. Responsif: full-width di HP, panel kanan di layar besar.
+// ProvinceDetailPanel — panel samping berisi detail provinsi,
+// rekomendasi kebijakan operasional, dan rekomendasi kebijakan struktural.
 // ============================================================================
+
 import { useMemo } from "react"
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Building2,
   Lightbulb,
   Minus,
   Package,
@@ -21,10 +23,12 @@ import {
   formatRupiah,
   type ProvinceData,
 } from "@/lib/data"
+
 interface PanelProps {
   province: ProvinceData | null
   onClose: () => void
 }
+
 export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
   const open = !!province
   const trend = useMemo(
@@ -33,9 +37,9 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
   )
   const diff = province ? province.predictedPrice - province.currentPrice : 0
   const status = province ? STATUS_STYLE[province.status] : null
+
   return (
     <>
-      {/* Overlay gelap */}
       <div
         className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
@@ -43,7 +47,7 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* Panel */}
+
       <aside
         className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-card shadow-xl transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
@@ -54,7 +58,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
       >
         {province && status && (
           <>
-            {/* Header panel */}
             <div className="flex items-start justify-between border-b border-border p-5">
               <div>
                 <span
@@ -77,21 +80,34 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {/* Konten yang bisa di-scroll */}
+
             <div className="flex-1 overflow-y-auto p-5">
-              {/* Rekomendasi kebijakan */}
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Rekomendasi Kebijakan Distribusi
-                  </h3>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Rekomendasi Kebijakan Operasional
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+                    {province.rekomendasiOperasional}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-                  {province.recommendation}
-                </p>
+
+                <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Rekomendasi Kebijakan Struktural
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+                    {province.rekomendasiStruktural}
+                  </p>
+                </div>
               </div>
-              {/* Harga */}
+
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-border bg-background p-4">
                   <p className="text-xs text-muted-foreground">
@@ -117,7 +133,7 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                   </p>
                 </div>
               </div>
-              {/* Produksi & konsumsi */}
+
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-4">
                   <Package className="h-5 w-5 text-primary" />
@@ -138,7 +154,7 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                   </div>
                 </div>
               </div>
-              {/* Grafik tren */}
+
               <div className="mt-4 rounded-xl border border-border bg-background p-3 sm:p-5">
                 <h3 className="mb-2 text-sm font-semibold text-foreground">
                   Tren Harga Beras
