@@ -699,53 +699,49 @@ export const PROVINCE_MAP: Record<string, ProvinceData> = Object.fromEntries(
 
 /**
  * Lookup by raw GeoJSON Propinsi key.
- * Memetakan variasi nama di GeoJSON ke id provinsi yang benar.
+ * Key = nilai PERSIS dari field Propinsi di indonesia-provinces.json (huruf kapital, nama lama).
  */
 const GEO_NAME_MAP: Record<string, string> = {
   // Sumatera
-  "Aceh": "aceh",
-  "Sumatera Utara": "sumatera-utara",
-  "Sumatera Barat": "sumatera-barat",
-  "Riau": "riau",
-  "Kepulauan Riau": "kepulauan-riau",
-  "Jambi": "jambi",
-  "Sumatera Selatan": "sumatera-selatan",
-  "Bangka Belitung": "kepulauan-bangka-belitung",
-  "Kepulauan Bangka Belitung": "kepulauan-bangka-belitung",
-  "Bengkulu": "bengkulu",
-  "Lampung": "lampung",
+  "DI. ACEH": "aceh",
+  "SUMATERA UTARA": "sumatera-utara",
+  "SUMATERA BARAT": "sumatera-barat",
+  "RIAU": "riau",
+  "KEP. RIAU": "kepulauan-riau",
+  "JAMBI": "jambi",
+  "SUMATERA SELATAN": "sumatera-selatan",
+  "BANGKA BELITUNG": "kepulauan-bangka-belitung",
+  "BENGKULU": "bengkulu",
+  "LAMPUNG": "lampung",
   // Jawa
-  "DKI Jakarta": "dki-jakarta",
-  "Jakarta Raya": "dki-jakarta",
-  "Jawa Barat": "jawa-barat",
-  "Jawa Tengah": "jawa-tengah",
-  "DI Yogyakarta": "di-yogyakarta",
-  "Yogyakarta": "di-yogyakarta",
-  "Jawa Timur": "jawa-timur",
-  "Banten": "banten",
+  "DKI JAKARTA": "dki-jakarta",
+  "JAWA BARAT": "jawa-barat",
+  "JAWA TENGAH": "jawa-tengah",
+  "DAERAH ISTIMEWA YOGYAKARTA": "di-yogyakarta",
+  "JAWA TIMUR": "jawa-timur",
+  "PROBANTEN": "banten",          // nama lama Banten di GeoJSON ini
   // Bali & Nusa Tenggara
-  "Bali": "bali",
-  "Nusa Tenggara Barat": "nusa-tenggara-barat",
-  "Nusa Tenggara Timur": "nusa-tenggara-timur",
+  "BALI": "bali",
+  "NUSATENGGARA BARAT": "nusa-tenggara-barat",
+  "NUSA TENGGARA TIMUR": "nusa-tenggara-timur",
   // Kalimantan
-  "Kalimantan Barat": "kalimantan-barat",
-  "Kalimantan Tengah": "kalimantan-tengah",
-  "Kalimantan Selatan": "kalimantan-selatan",
-  "Kalimantan Timur": "kalimantan-timur",
-  "Kalimantan Utara": "kalimantan-utara",
+  "KALIMANTAN BARAT": "kalimantan-barat",
+  "KALIMANTAN TENGAH": "kalimantan-tengah",
+  "KALIMANTAN SELATAN": "kalimantan-selatan",
+  "KALIMANTAN TIMUR": "kalimantan-timur",
+  "KALIMANTAN UTARA": "kalimantan-utara",
   // Sulawesi
-  "Sulawesi Utara": "sulawesi-utara",
-  "Sulawesi Tengah": "sulawesi-tengah",
-  "Sulawesi Selatan": "sulawesi-selatan",
-  "Sulawesi Tenggara": "sulawesi-tenggara",
-  "Gorontalo": "gorontalo",
-  "Sulawesi Barat": "sulawesi-barat",
+  "SULAWESI UTARA": "sulawesi-utara",
+  "SULAWESI TENGAH": "sulawesi-tengah",
+  "SULAWESI SELATAN": "sulawesi-selatan",
+  "SULAWESI TENGGARA": "sulawesi-tenggara",
+  "GORONTALO": "gorontalo",
+  "SULAWESI BARAT": "sulawesi-barat",
   // Maluku & Papua
-  "Maluku": "maluku",
-  "Maluku Utara": "maluku-utara",
-  "Papua Barat": "papua-barat",
-  "Papua": "papua",
-  "Papua Tengah": "papua",        // fallback ke Papua
+  "MALUKU": "maluku",
+  "MALUKU UTARA": "maluku-utara",
+  "IRIAN JAYA BARAT": "papua-barat",   // nama lama Papua Barat
+  "IRIAN JAYA TIMUR": "papua",         // nama lama Papua
 }
 
 /**
