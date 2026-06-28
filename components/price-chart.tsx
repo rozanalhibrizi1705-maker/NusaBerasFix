@@ -72,7 +72,7 @@ export function PriceChart({ data, mode = "government" }: { data: TrendPoint[]; 
   const visibleData = (() => {
     if (mode !== "public") return data
 
-    const base = data.slice(0, 5)
+    const base = data.slice(0, 4)
     return base.map((point, index) => {
       if (index === base.length - 2) {
         return { ...point, prediksi: point.aktual ?? point.prediksi }
