@@ -1,8 +1,9 @@
 "use client"
 
 // ============================================================================
-// PriceChart — grafik garis tren harga beras (aktual vs prediksi).
-// Menggunakan Recharts agar tampil lebih dekat dengan desain reference.
+// PriceChart — grafik garis tren harga beras.
+// Kompatibel dengan data buildTrend() dari lib/data.ts:
+// { week, actual, predicted }
 // ============================================================================
 
 import {
@@ -14,7 +15,30 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { formatRupiah, type TrendPoint } from "@/lib/data"
+import { formatRupiah } from "@/lib/data"
+
+type TrendPoint = {
+  week?: string
+  label?: string
+  actual?: number
+  predicted?: number
+  aktual?: number
+  prediksi?: number
+}
+
+type NormalizedPoint = {
+  week: string
+  actual?: number
+  predicted?: number
+}
+
+function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
+  return data.map((point, index) => ({
+    week: point.week ?? point.label ?? `M${index + 1}`,
+    actual: point.actual ?? point.aktual,
+    predicted: point.predicted ?? point.prediksi,
+  }))
+}
 
 function ChartTooltip({
   active,
@@ -22,24 +46,13 @@ function ChartTooltip({
   label,
 }: {
   active?: boolean
-  payload?: Array<{ dataKey?: string; value?: number; payload?: TrendPoint }>
+  payload?: Array<{ dataKey?: string; value?: number }>
   label?: string
 }) {
   if (!active || !payload || payload.length === 0) return null
 
-  const aktualEntry = payload.find((entry) => entry.dataKey === "aktual")
-  const prediksiEntry = payload.find((entry) => entry.dataKey === "prediksi")
-
-  const aktualValue = aktualEntry?.value
-  const prediksiValue = prediksiEntry?.value
-
-  // Kalau nilai prediksi sama dengan aktual (titik "Minggu Ini" yang dipakai
-  // hanya untuk menyambungkan garis putus-putus secara visual), jangan
-  // tampilkan baris "Prediksi" di tooltip — cukup tampilkan "Harga Aktual".
-  const showPrediksi =
-    prediksiValue !== undefined &&
-    prediksiValue !== null &&
-    !(aktualValue !== undefined && aktualValue !== null && prediksiValue === aktualValue)
+  const actual = payload.find((entry) => entry.dataKey === "actual")?.value
+  const predicted = payload.find((entry) => entry.dataKey === "predicted")?.value
 
   return (
     <div
@@ -47,50 +60,42 @@ function ChartTooltip({
         borderRadius: 12,
         border: "1px solid var(--color-border)",
         background: "var(--color-card)",
-        fontSize: 12,
         padding: "8px 12px",
+        fontSize: 12,
       }}
     >
-      <p style={{ color: "var(--color-foreground)", fontWeight: 600, margin: 0, marginBottom: 4 }}>
+      <p style={{ margin: 0, marginBottom: 4, color: "var(--color-foreground)", fontWeight: 600 }}>
         {label}
       </p>
-      {aktualValue !== undefined && aktualValue !== null && (
-        <p style={{ color: "#2f8f4c", margin: 0 }}>
-          Harga Aktual : {formatRupiah(aktualValue)}
+      {actual !== undefined && (
+        <p style={{ margin: 0, color: "#22c55e" }}>
+          Harga Aktual: {formatRupiah(actual)}
         </p>
       )}
-      {showPrediksi && (
-        <p style={{ color: "#f5c542", margin: 0 }}>
-          Prediksi : {formatRupiah(prediksiValue as number)}
+      {predicted !== undefined && (
+        <p style={{ margin: 0, color: "#facc15" }}>
+          Prediksi: {formatRupiah(predicted)}
         </p>
       )}
     </div>
   )
 }
 
-export function PriceChart({ data, mode = "government" }: { data: TrendPoint[]; mode?: "public" | "government" }) {
-  const visibleData = (() => {
-    if (mode !== "public") return data
-
-    const base = data.slice(0, 4)
-    return base.map((point, index) => {
-      if (index === base.length - 2) {
-        return { ...point, prediksi: point.aktual ?? point.prediksi }
-      }
-      if (index === base.length - 1) {
-        return { ...point, prediksi: point.prediksi ?? point.aktual }
-      }
-      return point
-    })
-  })()
+export function PriceChart({
+  data,
+}: {
+  data: TrendPoint[]
+  mode?: "public" | "government"
+}) {
+  const chartData = normalizeData(data)
 
   return (
-    <div className="h-72 w-full rounded-xl border border-border/70 bg-background/40 p-2">
+    <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={visibleData} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
           <XAxis
-            dataKey="label"
+            dataKey="week"
             tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
             tickLine={false}
             axisLine={{ stroke: "var(--color-border)" }}
@@ -100,71 +105,35 @@ export function PriceChart({ data, mode = "government" }: { data: TrendPoint[]; 
             tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
             tickLine={false}
             axisLine={false}
-            interval="preserveStartEnd"
-            minTickGap={16}
             domain={([dataMin, dataMax]) => {
-              const padding = Math.max(400, (dataMax - dataMin) * 0.16)
-              const roundedMin = Math.floor((dataMin - padding) / 100) * 100
-              const roundedMax = Math.ceil((dataMax + padding) / 100) * 100
-              const step = Math.max(100, Math.round((roundedMax - roundedMin) / 4 / 100) * 100)
-              return [roundedMin, roundedMax + step]
+              const padding = Math.max(200, (dataMax - dataMin) * 0.15)
+              return [
+                Math.floor((dataMin - padding) / 100) * 100,
+                Math.ceil((dataMax + padding) / 100) * 100,
+              ]
             }}
-            tickFormatter={(value: number) => {
-              const rounded = Math.round(value / 100) * 100
-              return `Rp${rounded / 1000}k`
-            }}
+            tickFormatter={(value: number) => `Rp${(value / 1000).toFixed(1)}k`}
           />
           <Tooltip content={<ChartTooltip />} />
           <Line
             type="monotone"
-            dataKey="aktual"
-            name="aktual"
-            stroke="#2f8f4c"
-            strokeWidth={2}
-            dot={{ r: 3.2, fill: "#2f8f4c", stroke: "#ffffff", strokeWidth: 1 }}
-            activeDot={{ r: 4.2, fill: "#2f8f4c", stroke: "#ffffff", strokeWidth: 1 }}
+            dataKey="actual"
+            name="Harga Aktual"
+            stroke="#22c55e"
+            strokeWidth={2.4}
+            dot={{ r: 3, fill: "#22c55e", stroke: "#ffffff", strokeWidth: 1 }}
+            activeDot={{ r: 5 }}
             connectNulls
           />
           <Line
             type="monotone"
-            dataKey="prediksi"
-            name="prediksi"
-            stroke="#f5c542"
-            strokeWidth={1.4}
-            strokeDasharray="5 4"
-            dot={(props: any) => {
-              const { cx, cy, payload, index } = props
-              // Jangan render dot kalau prediksi-nya null (tidak ada data di titik ini).
-              if (payload?.prediksi === null || payload?.prediksi === undefined) {
-                return <g key={`dot-prediksi-${index}`} />
-              }
-              // Jangan render dot kuning kalau nilainya sama dengan aktual
-              // (titik "Minggu Ini") — biar tidak menutupi dot hijau.
-              if (
-                payload?.aktual !== undefined &&
-                payload?.aktual !== null &&
-                payload?.prediksi === payload?.aktual
-              ) {
-                return <g key={`dot-prediksi-${index}`} />
-              }
-              return (
-                <circle
-                  key={`dot-prediksi-${index}`}
-                  cx={cx}
-                  cy={cy}
-                  r={2.8}
-                  fill="#f5c542"
-                  stroke="#ffffff"
-                  strokeWidth={1}
-                />
-              )
-            }}
-            activeDot={{
-              r: 3.8,
-              fill: "#f5c542",
-              stroke: "#ffffff",
-              strokeWidth: 1,
-            }}
+            dataKey="predicted"
+            name="Prediksi"
+            stroke="#facc15"
+            strokeWidth={2.2}
+            strokeDasharray="6 5"
+            dot={{ r: 3, fill: "#facc15", stroke: "#ffffff", strokeWidth: 1 }}
+            activeDot={{ r: 5 }}
             connectNulls
           />
         </LineChart>
