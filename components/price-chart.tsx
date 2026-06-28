@@ -40,6 +40,17 @@ function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
   }))
 }
 
+function addSeriesConnectors(data: NormalizedPoint[]): NormalizedPoint[] {
+  const firstPredictedIndex = data.findIndex((point) => point.predicted !== undefined)
+  if (firstPredictedIndex < 0) return data
+
+  return data.map((point, index) =>
+    index === firstPredictedIndex
+      ? { ...point, actual: point.predicted }
+      : point,
+  )
+}
+
 function ChartTooltip({
   active,
   payload,
@@ -53,6 +64,9 @@ function ChartTooltip({
 
   const actual = payload.find((entry) => entry.dataKey === "actual")?.value
   const predicted = payload.find((entry) => entry.dataKey === "predicted")?.value
+  const showPredicted =
+    predicted !== undefined &&
+    !(actual !== undefined && actual === predicted)
 
   return (
     <div
@@ -72,9 +86,9 @@ function ChartTooltip({
           Harga Aktual: {formatRupiah(actual)}
         </p>
       )}
-      {predicted !== undefined && (
+      {showPredicted && (
         <p style={{ margin: 0, color: "#facc15" }}>
-          Prediksi: {formatRupiah(predicted)}
+          Prediksi: {formatRupiah(predicted as number)}
         </p>
       )}
     </div>
@@ -88,14 +102,12 @@ export function PriceChart({
   data: TrendPoint[]
   mode?: "public" | "government"
 }) {
-  const normalizedData = normalizeData(data)
+  const normalizedData = addSeriesConnectors(normalizeData(data))
   const chartData =
     mode === "public"
       ? normalizedData
           .filter((point) => point.actual !== undefined || point.week === "M1" || point.week === "M2")
           .map((point) => {
-            if (point.week === "M-2") return { ...point, week: "M-2" }
-            if (point.week === "M-1") return { ...point, week: "M-1" }
             if (point.week === "M1") return { ...point, week: "Minggu Ini" }
             if (point.week === "M2") return { ...point, week: "Minggu Depan" }
             return point
