@@ -42,11 +42,12 @@ function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
 
 function addSeriesConnectors(data: NormalizedPoint[]): NormalizedPoint[] {
   const firstPredictedIndex = data.findIndex((point) => point.predicted !== undefined)
-  if (firstPredictedIndex < 0) return data
+  if (firstPredictedIndex <= 0) return data
+  const lastActualIndex = firstPredictedIndex - 1
 
   return data.map((point, index) =>
-    index === firstPredictedIndex
-      ? { ...point, actual: point.predicted }
+    index === lastActualIndex
+      ? { ...point, predicted: point.actual }
       : point,
   )
 }
