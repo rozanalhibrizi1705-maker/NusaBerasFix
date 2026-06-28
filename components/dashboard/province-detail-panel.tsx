@@ -1,11 +1,9 @@
 "use client"
-
 // ============================================================================
 // ProvinceDetailPanel — panel samping (slide-over) berisi detail provinsi
 // dan rekomendasi kebijakan distribusi beras. Muncul saat provinsi diklik
 // pada peta. Responsif: full-width di HP, panel kanan di layar besar.
 // ============================================================================
-
 import { useMemo } from "react"
 import {
   ArrowDownRight,
@@ -23,22 +21,18 @@ import {
   formatRupiah,
   type ProvinceData,
 } from "@/lib/data"
-
 interface PanelProps {
   province: ProvinceData | null
   onClose: () => void
 }
-
 export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
   const open = !!province
   const trend = useMemo(
     () => (province ? buildTrend(province) : []),
     [province],
   )
-
   const diff = province ? province.predictedPrice - province.currentPrice : 0
   const status = province ? STATUS_STYLE[province.status] : null
-
   return (
     <>
       {/* Overlay gelap */}
@@ -49,7 +43,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
         onClick={onClose}
         aria-hidden="true"
       />
-
       {/* Panel */}
       <aside
         className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-card shadow-xl transition-transform duration-300 ${
@@ -84,7 +77,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-
             {/* Konten yang bisa di-scroll */}
             <div className="flex-1 overflow-y-auto p-5">
               {/* Rekomendasi kebijakan */}
@@ -99,7 +91,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                   {province.recommendation}
                 </p>
               </div>
-
               {/* Harga */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-border bg-background p-4">
@@ -112,7 +103,7 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                 </div>
                 <div className="rounded-xl border border-border bg-background p-4">
                   <p className="text-xs text-muted-foreground">
-                    Prediksi M. Depan
+                    Prediksi 3 Bulan (12 Minggu)
                   </p>
                   <p className="mt-1 flex items-center gap-1 text-lg font-bold text-foreground">
                     {formatRupiah(province.predictedPrice)}
@@ -126,7 +117,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                   </p>
                 </div>
               </div>
-
               {/* Produksi & konsumsi */}
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-4">
@@ -148,7 +138,6 @@ export function ProvinceDetailPanel({ province, onClose }: PanelProps) {
                   </div>
                 </div>
               </div>
-
               {/* Grafik tren */}
               <div className="mt-4 rounded-xl border border-border bg-background p-3 sm:p-5">
                 <h3 className="mb-2 text-sm font-semibold text-foreground">
