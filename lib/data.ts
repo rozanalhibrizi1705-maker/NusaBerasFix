@@ -826,7 +826,7 @@ export function buildTrend(
   }))
 
   const predicted = province.prediksi12Minggu.map((price, i) => ({
-    week: `M${i + 1}`,
+    week: i === 0 ? "Minggu Ini" : `M+${i}`,
     actual: undefined,
     predicted: price,
   }))
