@@ -1,168 +1,256 @@
 "use client"
 
 // ============================================================================
-// PriceChart — grafik garis tren harga beras.
-// Kompatibel dengan data buildTrend() dari lib/data.ts:
-// { week, actual, predicted }
+// PublicLanding — Landing page publik (Masyarakat Umum).
+// Fitur: pemilihan provinsi, kartu harga saat ini & prediksi minggu depan,
+// grafik tren. Menggunakan komponen PriceChart dari @/components/price-chart.
 // ============================================================================
 
+import { useMemo, useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
 import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
-import { formatRupiah } from "@/lib/data"
+  ArrowDownRight,
+  ArrowUpRight,
+  LineChart as LineChartIcon,
+  Lock,
+  Minus,
+  ShieldCheck,
+  TrendingUp,
+} from "lucide-react"
+import { buttonVariants } from "@/components/ui/button"
+import { PriceChart } from "@/components/price-chart"
+import {
+  PROVINCES,
+  STATUS_STYLE,
+  buildTrend,
+  formatRupiah,
+} from "@/lib/data"
 
-type TrendPoint = {
-  week?: string
-  label?: string
-  actual?: number
-  predicted?: number
-  aktual?: number
-  prediksi?: number
-}
+export function PublicLanding() {
+  // Provinsi terpilih (default: Jawa Barat sebagai penyangga utama).
+  const [selectedId, setSelectedId] = useState("JAWA BARAT")
 
-type NormalizedPoint = {
-  week: string
-  actual?: number
-  predicted?: number
-}
-
-function normalizeData(data: TrendPoint[]): NormalizedPoint[] {
-  return data.map((point, index) => ({
-    week: point.week ?? point.label ?? `M${index + 1}`,
-    actual: point.actual ?? point.aktual,
-    predicted: point.predicted ?? point.prediksi,
-  }))
-}
-
-function addSeriesConnectors(data: NormalizedPoint[]): NormalizedPoint[] {
-  const firstPredictedIndex = data.findIndex((point) => point.predicted !== undefined)
-  if (firstPredictedIndex <= 0) return data
-  const lastActualIndex = firstPredictedIndex - 1
-
-  return data.map((point, index) =>
-    index === lastActualIndex
-      ? { ...point, predicted: point.actual }
-      : point,
+  const province = useMemo(
+    () => PROVINCES.find((p) => p.id === selectedId) ?? PROVINCES[0],
+    [selectedId],
   )
-}
+  const trend = useMemo(() => buildTrend(province), [province])
 
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: Array<{ dataKey?: string; value?: number }>
-  label?: string
-}) {
-  if (!active || !payload || payload.length === 0) return null
+  // Prediksi "minggu depan" = titik pertama dari prediksi 12 minggu (t+1),
+  // BUKAN predictedPrice (yang merupakan prediksi 12 minggu/3 bulan ke depan).
+  const nextWeekPrice = province.prediksi12Minggu[0]
 
-  const actual = payload.find((entry) => entry.dataKey === "actual")?.value
-  const predicted = payload.find((entry) => entry.dataKey === "predicted")?.value
-  const showPredicted =
-    predicted !== undefined &&
-    !(actual !== undefined && actual === predicted)
+  // Selisih harga prediksi minggu depan vs harga sekarang.
+  const diff = nextWeekPrice - province.currentPrice
+  const diffPct = ((diff / province.currentPrice) * 100).toFixed(1)
+  const status = STATUS_STYLE[province.status]
 
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid var(--color-border)",
-        background: "var(--color-card)",
-        padding: "8px 12px",
-        fontSize: 12,
-      }}
-    >
-      <p style={{ margin: 0, marginBottom: 4, color: "var(--color-foreground)", fontWeight: 600 }}>
-        {label}
-      </p>
-      {actual !== undefined && (
-        <p style={{ margin: 0, color: "#22c55e" }}>
-          Harga Aktual: {formatRupiah(actual)}
-        </p>
-      )}
-      {showPredicted && (
-        <p style={{ margin: 0, color: "#facc15" }}>
-          Prediksi: {formatRupiah(predicted as number)}
-        </p>
-      )}
-    </div>
-  )
-}
+    <div className="min-h-screen bg-background">
+      {/* ---------- Header publik ---------- */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg">
+              <Image src="/logo-mark.png" alt="Nusa Beras" width={36} height={36} />
+            </span>
+            <span className="text-lg font-bold tracking-tight text-foreground">
+              Nusa <span className="text-primary">Beras</span>
+            </span>
+          </Link>
 
-export function PriceChart({
-  data,
-  mode = "government",
-}: {
-  data: TrendPoint[]
-  mode?: "public" | "government"
-}) {
-  const normalizedData = addSeriesConnectors(normalizeData(data))
-  const chartData =
-    mode === "public"
-      ? normalizedData
-          .filter((point) => point.actual !== undefined || point.week === "Minggu Ini" || point.week === "M+1")
-          .map((point) => {
-            if (point.week === "M+1") return { ...point, week: "Minggu Depan" }
-            return point
-          })
-      : normalizedData
+          <Link href="/login" className={buttonVariants()}>
+            <Lock className="h-4 w-4" />
+            Login Pemerintah
+          </Link>
+        </div>
+      </header>
 
-  return (
-    <div className="h-72 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-          <XAxis
-            dataKey="week"
-            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-            tickLine={false}
-            axisLine={{ stroke: "var(--color-border)" }}
+      {/* ---------- Hero ---------- */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/hero-sawah.png"
+            alt="Hamparan sawah hijau di Indonesia"
+            fill
+            priority
+            className="object-cover"
           />
-          <YAxis
-            width={72}
-            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-            tickLine={false}
-            axisLine={false}
-            domain={([dataMin, dataMax]) => {
-              const padding = Math.max(200, (dataMax - dataMin) * 0.15)
-              return [
-                Math.floor((dataMin - padding) / 100) * 100,
-                Math.ceil((dataMax + padding) / 100) * 100,
-              ]
-            }}
-            tickFormatter={(value: number) => `Rp${(value / 1000).toFixed(1)}k`}
-          />
-          <Tooltip content={<ChartTooltip />} />
-          <Line
-            type="monotone"
-            dataKey="actual"
-            name="Harga Aktual"
-            stroke="#22c55e"
-            strokeWidth={2.4}
-            dot={{ r: 3, fill: "#22c55e", stroke: "#ffffff", strokeWidth: 1 }}
-            activeDot={{ r: 5 }}
-            connectNulls
-          />
-          <Line
-            type="monotone"
-            dataKey="predicted"
-            name="Prediksi"
-            stroke="#facc15"
-            strokeWidth={2.2}
-            strokeDasharray="6 5"
-            dot={{ r: 3, fill: "#facc15", stroke: "#ffffff", strokeWidth: 1 }}
-            activeDot={{ r: 5 }}
-            connectNulls
-          />
-        </LineChart>
-      </ResponsiveContainer>
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Pemantauan Ketahanan Pangan Nasional
+            </span>
+            <h1 className="mt-5 text-balance text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
+              Pantau Harga Beras & Prediksi Mingguan di Seluruh Indonesia
+            </h1>
+            <p className="mt-4 text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Nusa Beras menyajikan data harga beras terkini, prediksi harga
+              minggu depan, serta tren pergerakannya per provinsi — transparan
+              dan mudah dipahami untuk masyarakat.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a href="#nusa-beras" className={buttonVariants({ size: "lg" })}>
+                <TrendingUp className="h-4 w-4" />
+                Cek Harga Beras
+              </a>
+              <Link
+                href="/login"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                Area Pemerintah
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- Fitur Utama: Nusa Beras ---------- */}
+      <section id="nusa-beras" className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
+        <div className="flex flex-col gap-2 text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Cek Harga Beras di Provinsimu
+          </h2>
+          <p className="mx-auto max-w-xl text-pretty text-sm text-muted-foreground sm:text-base">
+            Pilih provinsi untuk melihat harga saat ini, prediksi minggu depan,
+            dan grafik tren pergerakan harga beras.
+          </p>
+        </div>
+
+        {/* Pemilih provinsi */}
+        <div className="mx-auto mt-8 max-w-md">
+          <label
+            htmlFor="province-select"
+            className="mb-2 block text-sm font-medium text-foreground"
+          >
+            Pilih Provinsi
+          </label>
+          <select
+            id="province-select"
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+            className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm outline-none ring-offset-background focus:ring-2 focus:ring-ring"
+          >
+            {[...PROVINCES]
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+          </select>
+        </div>
+
+        {/* Kartu informasi */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {/* Harga saat ini */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">
+                Harga Beras Saat Ini
+              </p>
+              <span
+                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${status.badge}`}
+              >
+                {status.label}
+              </span>
+            </div>
+            <p className="mt-3 text-3xl font-bold tracking-tight text-foreground">
+              {formatRupiah(province.currentPrice)}
+              <span className="ml-1 text-base font-medium text-muted-foreground">
+                /kg
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {province.name}
+            </p>
+          </div>
+
+          {/* Prediksi minggu depan */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">
+                Prediksi Harga Minggu Depan
+              </p>
+              <LineChartIcon className="h-4 w-4 text-primary" />
+            </div>
+            <p className="mt-3 text-3xl font-bold tracking-tight text-foreground">
+              {formatRupiah(nextWeekPrice)}
+              <span className="ml-1 text-base font-medium text-muted-foreground">
+                /kg
+              </span>
+            </p>
+            <p
+              className={`mt-1 flex items-center gap-1 text-sm font-medium ${
+                diff > 0
+                  ? "text-red-600"
+                  : diff < 0
+                    ? "text-emerald-600"
+                    : "text-muted-foreground"
+              }`}
+            >
+              {diff > 0 ? (
+                <ArrowUpRight className="h-4 w-4" />
+              ) : diff < 0 ? (
+                <ArrowDownRight className="h-4 w-4" />
+              ) : (
+                <Minus className="h-4 w-4" />
+              )}
+              {diff === 0
+                ? "Stabil"
+                : `${diff > 0 ? "+" : ""}${formatRupiah(diff)} (${diffPct}%)`}{" "}
+              dari minggu ini
+            </p>
+          </div>
+        </div>
+
+        {/* Grafik tren */}
+        <div className="mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                Tren Harga Beras — {province.name}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Pergerakan harga dari minggu ini ke minggu depan
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-4 rounded-full bg-chart-1" />
+                Aktual
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-0 w-4 border-t-2 border-dashed border-chart-2" />
+                Prediksi
+              </span>
+            </div>
+          </div>
+          <PriceChart key={province.id} data={trend} mode="public" />
+        </div>
+      </section>
+
+      {/* ---------- Footer ---------- */}
+      <footer className="border-t border-border bg-card">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-center sm:flex-row sm:text-left">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md">
+              <Image src="/logo-mark.png" alt="Nusa Beras" width={28} height={28} />
+            </span>
+            <span className="text-sm font-semibold text-foreground">
+              Nusa Beras
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Prototipe pemantauan ketahanan pangan. Data bersifat simulasi.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
