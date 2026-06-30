@@ -18,7 +18,7 @@ declare module "react-simple-maps" {
 }
 
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"
-import { PROVINCE_MAP_BY_GEO, STATUS_STYLE, type ProvinceData } from "@/lib/data"
+import { PROVINCE_MAP_BY_GEO, KLUSTER_STYLE, type ProvinceData } from "@/lib/data"
 
 const GEO_URL = "/indonesia-provinces.json"
 
@@ -54,7 +54,7 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
             geographies.map((geo) => {
               const rawId: string = geo.properties.Propinsi
               const data = PROVINCE_MAP_BY_GEO[rawId] ?? PROVINCE_MAP_BY_GEO[rawId.trim()]
-              const status = data ? STATUS_STYLE[data.status] : null
+              const style = data ? KLUSTER_STYLE[data.kluster] : null
               const isSelected = data && data.id === selectedId
 
               return (
@@ -63,10 +63,10 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
                   geography={geo}
                   onClick={() => data && onSelect(data)}
                   onMouseEnter={(e) => {
-                    if (data && status) {
+                    if (data && style) {
                       setHovered({
                         name: data.name,
-                        statusLabel: status.label,
+                        statusLabel: style.label,
                         x: e.clientX,
                         y: e.clientY,
                       })
@@ -80,7 +80,7 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
                   onMouseLeave={() => setHovered(null)}
                   style={{
                     default: {
-                      fill: status ? status.fill : "#cbd5e1",
+                      fill: style ? style.fill : "#cbd5e1",
                       stroke: "#ffffff",
                       strokeWidth: isSelected ? 1.5 : 0.5,
                       outline: "none",
@@ -88,7 +88,7 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
                       transition: "opacity 150ms, fill 150ms",
                     },
                     hover: {
-                      fill: status ? status.hover : "#94a3b8",
+                      fill: style ? style.hover : "#94a3b8",
                       stroke: "#ffffff",
                       strokeWidth: 1,
                       outline: "none",
@@ -96,7 +96,7 @@ export function IndonesiaMap({ selectedId, onSelect }: IndonesiaMapProps) {
                       cursor: data ? "pointer" : "default",
                     },
                     pressed: {
-                      fill: status ? status.hover : "#94a3b8",
+                      fill: style ? style.hover : "#94a3b8",
                       outline: "none",
                     },
                   }}
