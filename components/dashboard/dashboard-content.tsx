@@ -6,10 +6,11 @@
 // ============================================================================
 
 import { useState } from "react"
-import { CircleDollarSign, TrendingDown, TrendingUp } from "lucide-react"
+import { CircleDollarSign } from "lucide-react"
 import { IndonesiaMap } from "@/components/dashboard/indonesia-map"
 import { ProvinceDetailPanel } from "@/components/dashboard/province-detail-panel"
 import {
+  PROVINCES,
   KLUSTER_STYLE,
   formatRupiah,
   getNationalSummary,
@@ -21,28 +22,33 @@ export function DashboardContent() {
   const [selected, setSelected] = useState<ProvinceData | null>(null)
   const summary = getNationalSummary()
 
+  // Jumlah provinsi per kluster operasional — sumber sama persis dengan
+  // legenda & warna peta di bawah, supaya angka di kartu selalu sinkron.
+  const klusterCounts = (["A", "B", "C", "D"] as const).map((key) => ({
+    key,
+    count: PROVINCES.filter((p) => p.kluster === key).length,
+  }))
+
   // Definisi kartu statistik ringkasan nasional.
-  const stats = [
+  const stats: Array<{
+    label: string
+    value: string
+    color: string
+    icon?: typeof CircleDollarSign
+    dotColor?: string
+  }> = [
     {
       label: "Rata-rata Harga Nasional",
       value: formatRupiah(summary.avgPrice),
       icon: CircleDollarSign,
       color: "text-primary",
     },
-    {
-      label: "Provinsi Surplus",
-      value: `${summary.surplus} Provinsi`,
-      icon: TrendingUp,
-      color: "text-emerald-600",
-    },
-    {
-      label: "Provinsi Defisit",
-      value: `${summary.defisit} Provinsi`,
-      icon: TrendingDown,
-      color: "text-red-600",
-    },
-    
-    
+    ...klusterCounts.map(({ key, count }) => ({
+      label: KLUSTER_STYLE[key].label,
+      value: `${count} Provinsi`,
+      color: "text-foreground",
+      dotColor: KLUSTER_STYLE[key].fill,
+    })),
   ]
 
   return (
@@ -59,7 +65,7 @@ export function DashboardContent() {
       </div>
 
       {/* Kartu statistik */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((s) => (
           <div
             key={s.label}
@@ -69,7 +75,14 @@ export function DashboardContent() {
               <p className="text-xs font-medium text-muted-foreground">
                 {s.label}
               </p>
-              <s.icon className={`h-5 w-5 ${s.color}`} />
+              {s.icon ? (
+                <s.icon className={`h-5 w-5 ${s.color}`} />
+              ) : (
+                <span
+                  className="h-3 w-3 rounded-full"
+                  style={{ background: s.dotColor }}
+                />
+              )}
             </div>
             <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
               {s.value}
