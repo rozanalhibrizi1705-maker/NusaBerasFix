@@ -10,7 +10,7 @@ import { CircleDollarSign, TrendingDown, TrendingUp } from "lucide-react"
 import { IndonesiaMap } from "@/components/dashboard/indonesia-map"
 import { ProvinceDetailPanel } from "@/components/dashboard/province-detail-panel"
 import {
-  STATUS_STYLE,
+  KLUSTER_STYLE,
   formatRupiah,
   getNationalSummary,
   type ProvinceData,
@@ -86,13 +86,13 @@ export function DashboardContent() {
           </h2>
           {/* Legenda warna */}
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-            {(["surplus", "stabil", "defisit"] as const).map((key) => (
+            {(["A", "B", "C", "D"] as const).map((key) => (
               <span key={key} className="flex items-center gap-1.5">
                 <span
                   className="h-3 w-3 rounded-sm"
-                  style={{ background: STATUS_STYLE[key].fill }}
+                  style={{ background: KLUSTER_STYLE[key].fill }}
                 />
-                {STATUS_STYLE[key].label}
+                {KLUSTER_STYLE[key].label}
               </span>
             ))}
           </div>
