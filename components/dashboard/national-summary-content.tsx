@@ -2,8 +2,8 @@
 
 // ============================================================================
 // NationalSummaryContent — ringkasan nasional ketahanan beras: kartu
-// statistik agregat + tabel rincian seluruh provinsi (status, harga,
-// produksi, konsumsi).
+// statistik agregat + tabel rincian seluruh provinsi (kluster operasional,
+// harga, produksi, konsumsi).
 // ============================================================================
 
 import { useMemo, useState } from "react"
@@ -17,18 +17,18 @@ import {
 } from "lucide-react"
 import {
   PROVINCES,
-  STATUS_STYLE,
+  KLUSTER_STYLE,
   formatRupiah,
   getNationalSummary,
   type ProvinceData,
-  type Status,
+  type Kluster,
 } from "@/lib/data"
 
 type SortKey = "name" | "currentPrice" | "production" | "consumption"
 
 export function NationalSummaryContent() {
   const summary = getNationalSummary()
-  const [statusFilter, setStatusFilter] = useState<Status | "semua">("semua")
+  const [klusterFilter, setKlusterFilter] = useState<Kluster | "semua">("semua")
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortAsc, setSortAsc] = useState(true)
 
@@ -68,17 +68,19 @@ export function NationalSummaryContent() {
     },
   ]
 
-  const statusBreakdown: Array<{ key: Status; count: number }> = [
-    { key: "surplus", count: summary.surplus },
-    { key: "stabil", count: summary.stabil },
-    { key: "defisit", count: summary.defisit },
-  ]
+  // Hitung breakdown berdasarkan 4 kluster operasional (A/B/C/D)
+  const klusterBreakdown: Array<{ key: Kluster; count: number }> = (
+    ["A", "B", "C", "D"] as const
+  ).map((key) => ({
+    key,
+    count: PROVINCES.filter((p) => p.kluster === key).length,
+  }))
 
   const filtered = useMemo(() => {
     let rows: ProvinceData[] =
-      statusFilter === "semua"
+      klusterFilter === "semua"
         ? [...PROVINCES]
-        : PROVINCES.filter((p) => p.status === statusFilter)
+        : PROVINCES.filter((p) => p.kluster === klusterFilter)
 
     rows.sort((a, b) => {
       let comparison = 0
@@ -88,7 +90,7 @@ export function NationalSummaryContent() {
     })
 
     return rows
-  }, [statusFilter, sortKey, sortAsc])
+  }, [klusterFilter, sortKey, sortAsc])
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -131,13 +133,13 @@ export function NationalSummaryContent() {
         ))}
       </div>
 
-      {/* Distribusi status */}
+      {/* Distribusi kluster operasional */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="mb-4 text-base font-semibold text-foreground">
-          Distribusi Status Ketahanan
+          Distribusi Kluster Operasional
         </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {statusBreakdown.map(({ key, count }) => {
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {klusterBreakdown.map(({ key, count }) => {
             const pct = Math.round((count / summary.total) * 100)
             return (
               <div
@@ -148,9 +150,9 @@ export function NationalSummaryContent() {
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <span
                       className="h-2.5 w-2.5 rounded-full"
-                      style={{ background: STATUS_STYLE[key].fill }}
+                      style={{ background: KLUSTER_STYLE[key].fill }}
                     />
-                    {STATUS_STYLE[key].label}
+                    {KLUSTER_STYLE[key].label}
                   </span>
                   <span className="text-sm font-bold text-foreground">
                     {count}
@@ -159,7 +161,7 @@ export function NationalSummaryContent() {
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: STATUS_STYLE[key].fill }}
+                    style={{ width: `${pct}%`, background: KLUSTER_STYLE[key].fill }}
                   />
                 </div>
                 <p className="mt-1.5 text-xs text-muted-foreground">
@@ -177,19 +179,19 @@ export function NationalSummaryContent() {
           <h2 className="text-base font-semibold text-foreground">
             Rincian Seluruh Provinsi
           </h2>
-          {/* Filter status */}
+          {/* Filter kluster */}
           <div className="flex flex-wrap gap-2">
-            {(["semua", "surplus", "stabil", "defisit"] as const).map((key) => (
+            {(["semua", "A", "B", "C", "D"] as const).map((key) => (
               <button
                 key={key}
-                onClick={() => setStatusFilter(key)}
+                onClick={() => setKlusterFilter(key)}
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                  statusFilter === key
+                  klusterFilter === key
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border text-muted-foreground hover:bg-secondary"
                 }`}
               >
-                {key === "semua" ? "Semua" : STATUS_STYLE[key].label}
+                {key === "semua" ? "Semua" : KLUSTER_STYLE[key].label}
               </button>
             ))}
           </div>
@@ -207,7 +209,7 @@ export function NationalSummaryContent() {
                     Provinsi <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Kluster</th>
                 <th className="px-4 py-3">
                   <button
                     onClick={() => toggleSort("currentPrice")}
@@ -246,9 +248,9 @@ export function NationalSummaryContent() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[p.status].badge}`}
+                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${KLUSTER_STYLE[p.kluster].badge}`}
                       >
-                        {STATUS_STYLE[p.status].label}
+                        {KLUSTER_STYLE[p.kluster].label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-foreground">
