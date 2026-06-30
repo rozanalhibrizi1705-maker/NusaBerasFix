@@ -52,6 +52,23 @@ function addSeriesConnectors(data: NormalizedPoint[]): NormalizedPoint[] {
   )
 }
 
+function PredictedDot(props: any) {
+  const { cx, cy, payload, index } = props
+  // Sembunyikan dot kuning di titik sambungan (yang actual-nya juga terisi),
+  // supaya cuma dot hijau (actual) yang terlihat di titik "Minggu Ini".
+  if (payload?.actual !== undefined) return <g key={`pdot-${index}`} />
+  return (
+    <circle
+      key={`pdot-${index}`}
+      cx={cx}
+      cy={cy}
+      r={3}
+      fill="#facc15"
+      stroke="#ffffff"
+      strokeWidth={1}
+    />
+  )
+}
 function ChartTooltip({
   active,
   payload,
@@ -156,7 +173,7 @@ export function PriceChart({
             stroke="#facc15"
             strokeWidth={2.2}
             strokeDasharray="6 5"
-            dot={{ r: 3, fill: "#facc15", stroke: "#ffffff", strokeWidth: 1 }}
+            dot={<PredictedDot />}
             activeDot={{ r: 5 }}
             connectNulls
           />
