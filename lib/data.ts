@@ -70,6 +70,36 @@ export const STATUS_STYLE: Record<
   },
 }
 
+export const KLUSTER_STYLE: Record<
+  Kluster,
+  { fill: string; hover: string; label: string; badge: string }
+> = {
+  A: {
+    fill: "#e67e22",
+    hover: "#ca6510",
+    label: "Surplus Tertekan",
+    badge: "border-orange-300 bg-orange-50 text-orange-700",
+  },
+  B: {
+    fill: "#e74c3c",
+    hover: "#c0392b",
+    label: "Defisit Kritis",
+    badge: "border-red-300 bg-red-50 text-red-700",
+  },
+  C: {
+    fill: "#27ae60",
+    hover: "#1e8449",
+    label: "Kondisi Aman",
+    badge: "border-emerald-300 bg-emerald-50 text-emerald-700",
+  },
+  D: {
+    fill: "#f1c40f",
+    hover: "#d4ac0d",
+    label: "Stabil Semu",
+    badge: "border-yellow-300 bg-yellow-50 text-yellow-700",
+  },
+}
+
 // ---------------------------------------------------------------------------
 // Raw data — 34 provinsi
 // ---------------------------------------------------------------------------
