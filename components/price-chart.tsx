@@ -107,12 +107,10 @@ export function PriceChart({
   const chartData =
     mode === "public"
       ? normalizedData
-          .filter((point) => point.actual !== undefined || point.week === "M1" || point.week === "M2")
-          .map((point) => {
-            if (point.week === "M1") return { ...point, week: "Minggu Ini" }
-            if (point.week === "M2") return { ...point, week: "Minggu Depan" }
-            return point
-          })
+          .filter((point) => point.week === "Minggu Ini" || point.week === "M+1")
+          .map((point) =>
+            point.week === "M+1" ? { ...point, week: "Minggu Depan" } : point,
+          )
       : normalizedData
 
   return (
